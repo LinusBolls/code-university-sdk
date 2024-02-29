@@ -16,6 +16,9 @@
     "api client"
   ],
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "microbundle",
     "dev": "microbundle watch",
