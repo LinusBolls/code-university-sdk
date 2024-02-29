@@ -1,7 +1,7 @@
 import { config } from '../config';
 
 const getJwtString = (googleCookie: string): string | null => {
-  return googleCookie.match(/cid=(.*)$/)?.[1];
+  return googleCookie.match(/cid=([^;]*)/)?.[1];
 };
 
 const parseJwtString = <T>(token: string): T | null => {
