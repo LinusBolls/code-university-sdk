@@ -1,0 +1,14 @@
+__tests__/
+docs/
+node_modules/
+src/
+.env.testing
+.env.testing.example
+.DS_Store
+.eslintrc.js
+.gitignore
+.npmignore
+.prettierignore
+.prettierrc.cjs
+graphql-codegen.config.ts
+vitest.config.ts

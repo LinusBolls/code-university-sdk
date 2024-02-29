@@ -1,0 +1,3344 @@
+"""
+Exposes a URL that specifies the behavior of this scalar.
+"""
+directive @specifiedBy(
+  """
+  The URL that specifies the behavior of this scalar.
+  """
+  url: String!
+) on SCALAR
+
+type AnnouncementMessage {
+  id: ID!
+
+  """
+  The announcements title/header text
+  """
+  title: String!
+
+  """
+  The announcements body text/longer form message
+  """
+  message: String!
+  type: AnnouncementMessageType!
+
+  """
+  When the announcement should start being displayed
+  """
+  startTime: DateTime!
+
+  """
+  When the announcement should stop being displayed
+  """
+  endTime: DateTime
+
+  """
+  The text to display on the button
+  """
+  buttonLabel: String
+
+  """
+  A link to the resource of the announcement
+  """
+  link: String
+}
+
+"""
+Describes the type of an announcement message that gets rendered
+"""
+enum AnnouncementMessageType {
+  success
+  error
+  warning
+  info
+}
+
+type Assessment {
+  proposedDate: DateTime
+  submittedOn: DateTime!
+  requiresScheduling: Boolean
+  published: Boolean
+  readyForPublishing: Boolean
+  publishedAt: DateTime
+  proposalStatus: ProposalStatus!
+  assessmentStatus: AssessmentStatus
+  assessmentStyle: AssessmentStyle!
+  assessmentType: AssessmentType!
+  examinationForms: [ExaminationForm!]!
+  proposalText: String
+  grade: Float
+  assessmentProtocol: String
+  internalNotes: String
+  externalFeedback: String
+  earlyAssessmentProposal: String
+  examinationOfficeNotes: String
+  project: Project
+  learningUnit: EventGroup
+  semesterModule: SemesterModule
+  semester: Semester
+  assessor: User
+  module: Module
+  userHandins: [UserHandin]
+  event: Event
+  user: User
+  assistant: User
+
+  """
+  Status of this assessment indicated to ...
+  """
+  manageStatus: String
+
+  """
+  Get the latest attempt on the module linked to this assessment
+  """
+  latestAttempt: Assessment
+
+  """
+  List all previous attempts on the module linked to this assessment
+  """
+  previousAttempts: [Assessment!]
+
+  """
+  Indicates whether or not this assessment is an early registration
+  """
+  canEarlyAssess: Boolean
+  permissions: AssessmentPermissions!
+  workflowStatus: WorkflowStatus!
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input AssessmentCreateInput {
+  proposalText: String
+  projectId: ID
+  eventGroupId: ID
+  examinationForms: [ExaminationForm!]
+  assessmentType: AssessmentType
+}
+
+input AssessmentDetailsEditInput {
+  grade: Float
+  examinationOfficeNotes: String
+  externalFeedback: String
+  startTime: DateTime
+  endTime: DateTime
+}
+
+input AssessmentEditInput {
+  internalNotes: String
+  externalFeedback: String
+  grade: Float
+}
+
+input AssessmentFilter {
+  """
+  Fulltext search string
+  """
+  search: String
+
+  """
+  Filter assessments by assessed student
+  """
+  student: ID
+
+  """
+  Filter assessments by assessor
+  """
+  assessor: ID
+
+  """
+  Filter assessments by module(s)
+  """
+  modules: [ID]
+
+  """
+  Filter assessments by semester module
+  """
+  semesterModule: ID
+
+  """
+  Filter assessments by semester
+  """
+  semester: ID
+
+  """
+  Filter assessments by status
+  """
+  status: AssessmentStatus
+
+  """
+  Filter assessments by grade(fail or not fail)
+  """
+  grade: String
+
+  """
+  Filter assessments by their style
+  """
+  assessmentStyle: AssessmentStyle
+
+  """
+  Filter assessments by their type
+  """
+  assessmentType: AssessmentType
+
+  """
+  Computed Status indicating the state the assessment is in at the moment
+  """
+  workflowStatus: WorkflowStatus
+
+  """
+  Filter assessments by their event's date
+  """
+  date: String
+}
+
+input AssessmentInput {
+  student: ID!
+  semester: ID!
+  project: ID
+  learningUnit: ID
+  assessor: ID!
+  assistant: ID
+  assessmentType: AssessmentType!
+  semesterModule: ID!
+  registrationStatus: ProposalStatus!
+  assessmentStatus: AssessmentStatus
+  grade: Float
+  assessmentStyle: AssessmentStyle!
+  externalFeedback: String
+  internalNotes: String
+  examinationOfficeNotes: String!
+  published: Boolean
+  readyForPublishing: Boolean
+  addModuleHandins: Boolean
+  startTime: DateTime
+  endTime: DateTime
+  location: String
+  remoteLocation: String
+  submittedOn: DateTime
+}
+
+type AssessmentPermissions {
+  canAssess: Boolean
+  isBeingAssessed: Boolean
+  canManage: Boolean
+}
+
+input AssessmentProposalInput {
+  assistantId: ID
+  location: String
+  remoteLocation: String
+  startTime: DateTime
+  handinDeadline: DateTime
+  handinId: ID
+  examinationForms: [ExaminationForm]
+}
+
+"""
+Includes the number of not yet published assessments, categorized by type
+"""
+type AssessmentStatistics {
+  """
+  Number of standard assessment registrations
+  """
+  standardRegistrations: Int
+
+  """
+  Number of alternative assessment registrations
+  """
+  alternativeRegistrations: Int
+
+  """
+  Number of sts assessment registrations
+  """
+  stsRegistrations: Int
+
+  """
+  Number of foundation assessment registrations
+  """
+  foundationRegistrations: Int
+
+  """
+  Number of assessments that still need approval by the coordinator
+  """
+  openAlternativeProposals: Int
+}
+
+"""
+Possible stati for `Assessment` end stages
+"""
+enum AssessmentStatus {
+  """
+  The student has handed in all needed assessment materials and/or was present at the oral assessment
+  """
+  PRESENT
+
+  """
+  The student has not handed in the required materials and further review is
+  required to see whether they were excused or not
+  """
+  ABSENT
+
+  """
+  Even though the student has failed to hand in the requried materials/appear in
+  the oral assesment, they were excused and as such the assessment is not
+  counted against their maximum tries
+  """
+  EXCUSED
+
+  """
+  The student failed to provide the requested assesment materials/appear in
+  person without providing a valid excuse. As such the assessment is an automtic fail
+  """
+  NOT_EXCUSED
+}
+
+"""
+Possible `Assessment` styles, representing the different ways of regsitering/applying for an `Assessment`
+"""
+enum AssessmentStyle {
+  STANDARD
+  ALTERNATIVE
+  FOUNDATION
+  STS
+}
+
+"""
+Possible types of assessments, mostly relevant for `Assessment`s happening outside the regular phases
+"""
+enum AssessmentType {
+  NORMAL
+  EARLY
+  REASSESSMENT
+  PRIOR_LEARNING
+  LEVEL_UP
+}
+
+type AuditEntry {
+  affectedResource: String!
+  author: String!
+  source: String!
+  before: JSON
+  after: JSON
+  method: AuditMethod!
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Possible Methods an Audit Entry can be caused by
+"""
+enum AuditMethod {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+type AuthPayload {
+  token: String
+}
+
+input CarryOverProjectInput {
+  title: String!
+  coverUrl: String
+  description: String!
+  outline: String!
+  isLookingForTeammates: Boolean!
+  tags: [String!]!
+  projectId: ID!
+  teamMembers: [ProjectTeamMemberInput!]!
+  sponsor: ID
+}
+
+"""
+Represents the data for a compulsory elective group
+"""
+type CompulsoryElectiveGroupData {
+  """
+  The list of module codes
+  """
+  moduleCodes: [String!]!
+
+  """
+  The ECTS required for this group
+  """
+  required: Float!
+
+  """
+  The ECTS collected for this group
+  """
+  counted: Float!
+}
+
+input CreateProjectInput {
+  title: String!
+  coverUrl: String
+  description: String!
+  outline: String!
+  sponsor: ID
+  isLookingForTeammates: Boolean!
+  tags: [String!]
+  semesters: [String!]!
+  projectType: ProjectType
+  teamMembers: [ProjectTeamMemberInput!]!
+}
+
+"""
+A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the
+`date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO
+8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar DateTime
+
+type Department {
+  name: String!
+  abbreviation: String!
+  description: String
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Statistic that holds information about some particular ects that was collected within a semester/period
+"""
+type EctsStatistic {
+  """
+  The semester the ects were collected in
+  """
+  semester: String
+
+  """
+  The amount of ects credits that were collected
+  """
+  count: Float
+
+  """
+  The percent the collected ects credits represent out of the total ects required to graduate
+  """
+  percent: Float
+}
+
+type Event {
+  title: String!
+  description: String!
+  startTime: DateTime!
+  endTime: DateTime!
+  allDay: Boolean
+  creatorEmail: String!
+  iCalUid: String!
+  location: String
+  remoteLocation: String
+
+  """
+  List of users not attending this event
+  """
+  signedOutMembers: [User!]!
+
+  """
+  Host of this event
+  """
+  host: User
+
+  """
+  Get details of the next event within the container event group that will be happening
+  """
+  nextEventForGroup: EventGroup
+  eventGroupId: String
+
+  """
+  Event group containin this event
+  """
+  eventGroup: EventGroup
+
+  """
+  Whether or not the currently logged in user edit the attendance data of this event
+  """
+  isHost: Boolean
+
+  """
+  Whether or not the currently logged in user can leave this event
+  """
+  canLeave: Boolean!
+
+  """
+  Whether or not the currently logged in user can join this event
+  """
+  canJoin: Boolean!
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type EventGroup {
+  imageUrl: String
+  title: String!
+  description: String!
+  isHidden: Boolean
+  type: EventGroupType!
+  category: EventGroupCategory
+  visibility: EventGroupVisibility
+  participants: [EventGroupParticipations]!
+  maxParticipants: Int!
+  slackLink: String
+  googleSpaceLink: String
+
+  """
+  Next event within this event group that is taking place
+  """
+  nextEvent: Event
+
+  """
+  Number of events in this event group which have not taken place yet
+  """
+  futureEventCount: Int!
+
+  """
+  List organizers and hosts of this event group
+  """
+  organizersAndHosts: [User!]
+  department: Department
+  organizers: [User!]!
+  modules: [SemesterModule!]!
+  events: [Event!]
+
+  """
+  List events that are colliding with events in this event group
+  """
+  collidingEvents: [Event!]
+  semester: Semester
+  tags: [Tag!]
+
+  """
+  Number of participants attending this event group
+  """
+  participantCount: Int!
+
+  """
+  Whether or not the current user can edit this event group
+  """
+  canEdit: Boolean!
+
+  """
+  Whether or not the current user can register for this event group
+  """
+  canRegister: Boolean!
+
+  """
+  Whether or not the current user can leave this event group
+  """
+  canUnregister: Boolean!
+
+  """
+  Whether or not the current user is registered for this event group
+  """
+  isRegistered: Boolean!
+
+  """
+  Whether or not the current user is in the waiting list of this event group
+  """
+  isInWaitingList: Boolean!
+
+  """
+  Whether or not this event group is full
+  """
+  isEventFull: Boolean!
+
+  """
+  Whether or not the current user is an organizer for this event group
+  """
+  isHost: Boolean!
+  permissions: EventGroupPermissions!
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum EventGroupCategory {
+  CREATIVE
+  CULTURE
+  FOOD_AND_DRINK
+  GAMES
+  MOVIES_AND_TV
+  SPORT
+  TALK
+  WELLBEING
+  OTHER
+  CAREER
+}
+
+input EventGroupFilter {
+  search: String
+  startDate: DateTime
+  endDate: DateTime
+  category: EventGroupCategory
+  module: ID
+  department: ID
+  semester: ID
+  hideFullEvents: Boolean
+  student: ID
+}
+
+input EventGroupInput {
+  title: String!
+  description: String!
+  semesterId: ID
+  imageUrl: String
+  type: EventGroupType!
+  category: EventGroupCategory
+  maxParticipants: Int
+  department: String
+  visibility: EventGroupVisibility
+  isHidden: Boolean!
+  modules: [String!]
+  organizers: [String!]!
+}
+
+enum EventGroupParticipantsStatus {
+  WAITING_LIST
+  JOINED
+}
+
+type EventGroupParticipations {
+  status: EventGroupParticipantsStatus!
+  eventGroup: EventGroup
+  participant: User
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type EventGroupPermissions {
+  canEdit: Boolean
+  canManage: Boolean
+}
+
+enum EventGroupType {
+  ACADEMIC
+  NON_ACADEMIC
+}
+
+enum EventGroupVisibility {
+  ORIENTATION_STUDENT
+  CORE_STUDENT
+  UNRESTRICTED
+}
+
+enum ExaminationForm {
+  NONE
+  ORAL_OR_PRACTICAL_EXAMINATION
+  WRITTEN_EXAMINATION
+  LECTURE_OR_PRESENTATION
+  DISCUSSION
+  INTERVIEW
+  WRITTEN_ELABORATION
+  PROJECT_PORTFOLIO
+  ELECTRONIC_ATTENDANCE_RECORD
+}
+
+"""
+Describes the type/category of the uploaded file.
+"""
+enum FileType {
+  DOCUMENT
+  PICTURE
+}
+
+type FormComponent {
+  id: ID!
+  index: Int
+  type: HandinComponent!
+  title: String
+  mandatory: Boolean!
+  moduleHandin: ModuleHandin
+}
+
+input FormComponentInput {
+  title: String
+  type: HandinComponent!
+  mandatory: Boolean!
+  index: Int
+}
+
+"""
+Represents the student handbook overview
+"""
+type HandbookOverviewData {
+  """
+  Overview data for all mandatory modules
+  """
+  MANDATORY: HandbookOverviewModuleTypeData!
+
+  """
+  Overview data for all compulsory elective modules
+  """
+  COMPULSORY_ELECTIVE: HandbookOverviewModuleTypeData!
+
+  """
+  Overview data for all passed elective modules
+  """
+  ELECTIVE: HandbookOverviewModuleTypeData!
+
+  """
+  The compulsory elective groups
+  """
+  compulsoryElectiveGroups: [CompulsoryElectiveGroupData!]!
+
+  """
+  Overview data for modules that do not count towards graduation
+  """
+  invalidAssessments: [HandbookOverviewModuleData!]!
+}
+
+"""
+Represents the status and best grade for a given module
+"""
+type HandbookOverviewModuleData {
+  """
+  The module identifier
+  """
+  moduleIdentifier: String!
+
+  """
+  The module title
+  """
+  title: String!
+
+  """
+  The ECTS of the module
+  """
+  ects: Float!
+
+  """
+  The best grade
+  """
+  grade: String!
+
+  """
+  The student status of the module
+  """
+  status: String!
+}
+
+"""
+Represents data for the handbook modules for a type
+"""
+type HandbookOverviewModuleTypeData {
+  """
+  The total ECTS needed
+  """
+  totalECTSNeeded: Float!
+
+  """
+  The ECTS stats for capstone projects
+  """
+  modules: [HandbookOverviewModuleData!]!
+}
+
+enum HandinComponent {
+  DOCUMENT
+  LINK
+  SELF_ASSESSMENT
+  SELF_ASSESSMENT_RATIONALE
+  ESSAY
+  COMMENT
+  CHECKBOX
+}
+
+input HandinCustomDeadlineInput {
+  moduleId: String
+  deadline: DateTime
+  index: Int
+}
+
+"""
+Status of the user hand-in
+"""
+enum HandinStatus {
+  SUBMITTED
+  NOT_SUBMITTED
+}
+
+"""
+Information about the important dates in the semester
+"""
+type ImportantSemesterDate {
+  """
+  A unique ID for this semester date
+  """
+  id: ID
+
+  """
+  The name of this important semester date.
+  """
+  title: String
+
+  """
+  A subtitle that is used to indicate what type of date this is e.g. a deadline.
+  """
+  subtitle: String
+
+  """
+  The actual date value.
+  """
+  date: DateTime
+  visibility: SemesterDateVisibility
+}
+
+input ImportantSemesterDateCreateInput {
+  title: String!
+  subtitle: String
+  date: DateTime!
+  visibility: SemesterDateVisibility!
+  semesterId: ID!
+}
+
+input ImportantSemesterDateFilter {
+  """
+  If this flag is set, the list only contains custom semester dates. Some dates are set in the
+  application and others can be added dynamically. These dynamically added dates are what we
+  refer to as "custom" dates.
+  """
+  custom: Boolean
+}
+
+"""
+Information about the important dates in the semester
+"""
+type ImportantSemesterDateView {
+  """
+  A unique ID for this semester date
+  """
+  id: ID
+
+  """
+  The name of this important semester date.
+  """
+  title: String
+
+  """
+  A subtitle that is used to indicate what type of date this is e.g. a deadline.
+  """
+  subtitle: String
+
+  """
+  The actual date value.
+  """
+  date: DateTime
+}
+
+type JourneyDocument {
+  fileType: FileType!
+  fileName: String!
+  key: String!
+  signedLink: String
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type LearningResource {
+  title: String!
+  description: String!
+  link: String
+  medium: ResourceMedium!
+  approvedBy: User
+  submittedBy: User
+  modules: [Module!]!
+
+  """
+  Whether or not the currently signed in user can edit this learning resource
+  """
+  canEdit: Boolean
+
+  """
+  Whether or not the currently signed in user can disable this learning resource
+  """
+  canDisable: Boolean
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input LearningResourceFilter {
+  search: String
+}
+
+input LearningResourceInput {
+  title: String!
+  description: String!
+  medium: ResourceMedium!
+  link: String
+  modules: [String!]!
+}
+
+type Module {
+  title: String!
+  shortCode: String!
+  moduleIdentifier: String
+  simpleShortCode: String!
+  department: Department
+  content: String!
+  qualificationGoals: String
+  ects: Float!
+  contactTime: Int
+  selfStudyTime: Int
+  weeklyHours: Int
+  graded: Boolean
+  retired: Boolean
+  frequency: ModuleFrequency!
+  teachingFormats: [TeachingFormat!]
+  examinationForms: [ExaminationForm!]
+  coordinator: User
+  prerequisites: [Module!]
+  prerequisiteFor: [Module!]
+  replacements: [Module!]
+  replacementFor: [Module!]
+  moduleHandbooks: [ModuleHandbookModule!]
+  learningResources: [LearningResource!]!
+  semesterModules: [SemesterModule!]!
+  workload: Int
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Statistic that holds the number of assessments per module, with counts for each type
+"""
+type ModuleAndAssessmentProposalStatistic {
+  semesterModule: SemesterModule
+
+  """
+  Number of early assessment proposals
+  """
+  earlyAssessmentProposals: Int
+
+  """
+  Number of alternative assessment proposals
+  """
+  alternativeAssessmentProposals: Int
+}
+
+"""
+Statistic that holds the number of assessments per module, with counts for each type
+"""
+type ModuleAndAssessmentStatistic {
+  semesterModule: SemesterModule
+
+  """
+  Number of standard assessment registrations
+  """
+  standardRegistrations: Int
+
+  """
+  Number of alternative assessment registrations
+  """
+  alternativeRegistrations: Int
+
+  """
+  Number of sts assessment registrations
+  """
+  stsRegistrations: Int
+
+  """
+  Number of foundation assessment registrations
+  """
+  foundationRegistrations: Int
+
+  """
+  Number of reassessment registrations for the previous semester
+  """
+  reassessmentRegistrations: Int
+}
+
+input ModuleFilter {
+  """
+  Fulltext search string
+  """
+  search: String
+
+  """
+  Show only modules which are mandatory/compulsory elective for the current user
+  """
+  onlyMandatory: Boolean
+
+  """
+  Show only modules belonging to the respective department
+  """
+  department: String
+
+  """
+  Show only modules coordinated by the given user
+  """
+  coordinator: ID
+
+  """
+  Show only modules passed by the current user
+  """
+  passed: Boolean
+
+  """
+  Show only modules failed by the current user
+  """
+  failed: Boolean
+}
+
+enum ModuleFrequency {
+  YEARLY
+  EVERY_SEMESTER
+}
+
+type ModuleHandbook {
+  name: String!
+  validFrom: DateTime!
+  studyProgram: StudyProgram
+  modules: [ModuleHandbookModule!]!
+  students: [StudentModuleHandbook!]
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input ModuleHandbookFilter {
+  search: String
+  department: String
+}
+
+input ModuleHandbookInput {
+  name: String!
+  validFrom: DateTime!
+}
+
+type ModuleHandbookModule {
+  type: ModuleHandbookModuleType!
+  numMandatoryElectives: Int
+  electiveModules: [ModuleHandbookModule!]!
+  otherElectiveModules: [ModuleHandbookModule!]!
+  module: Module
+  moduleHandbook: ModuleHandbook
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input ModuleHandbookModuleInput {
+  type: ModuleHandbookModuleType!
+  numMandatoryElectives: Int
+  electiveModules: [String!]!
+}
+
+enum ModuleHandbookModuleType {
+  MANDATORY
+  COMPULSORY_ELECTIVE
+  ELECTIVE
+}
+
+type ModuleHandin {
+  title: String!
+  description: String
+  semesterModules: [SemesterModule]
+  eventGroup: EventGroup
+  mandatory: Boolean!
+  deadline: DateTime
+
+  """
+  Form components for the this hand-in
+  """
+  formComponents: [FormComponent!]!
+  user: User
+  published: Boolean!
+  userHandins: [UserHandin!]!
+  permissions: ModuleHandinPermissions!
+
+  """
+  Deadline for this hand-in
+  """
+  latestHandinDeadline: DateTime
+  canDelete: Boolean
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input ModuleHandinFilter {
+  """
+  Fulltext search string
+  """
+  search: String
+
+  """
+  Show assessment Handins
+  """
+  mandatory: Boolean
+
+  """
+  Show all Handins related to specific module
+  """
+  module: ID
+
+  """
+  Show all Handins in a specific semester
+  """
+  semester: ID
+}
+
+input ModuleHandinInput {
+  title: String!
+  description: String
+  semesterModuleIds: [String!]
+  eventGroupId: String
+  setDeadline: Boolean = false
+  deadline: DateTime
+  mandatory: Boolean!
+  formComponents: [FormComponentInput!]!
+}
+
+type ModuleHandinPermissions {
+  canManage: Boolean
+}
+
+input ModuleInput {
+  title: String!
+  shortCode: String!
+  content: String!
+  qualificationGoals: String!
+  department: String
+  coordinator: String!
+  graded: Boolean!
+  ects: Float!
+  contactTime: Int!
+  selfStudyTime: Int!
+  weeklyHours: Int!
+  teachingFormats: [TeachingFormat!]!
+  frequency: ModuleFrequency!
+  examinationForms: [ExaminationForm!]!
+  prerequisites: [String!]!
+}
+
+type ModuleUpdate {
+  content: String!
+  author: User
+  semesterModule: SemesterModule
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Mutation {
+  toggleAssessmentEmails(enableEmail: Boolean!): Boolean
+  updateConsultationCapacity(consultationCapacity: Int!): Boolean
+  createModuleUpdate(
+    semesterModuleId: ID!
+    data: SemesterModuleUpdateInput!
+  ): ModuleUpdate
+  createProjectUpdate(data: ProjectUpdateInput!, project: ID!): ProjectUpdate!
+
+  """
+  Creates an assessment without going through the regular registration process
+  """
+  createAssessment(data: AssessmentInput!): Assessment
+
+  """
+  Registers the current user to a standard assessment
+  """
+  createStandardAssessment(
+    semesterModuleId: ID!
+    data: AssessmentCreateInput!
+  ): Assessment
+
+  """
+  Registers the current user to an alternative assessment by submitting a proposal
+  """
+  createAlternativeAssessment(
+    semesterModuleId: ID!
+    data: AssessmentCreateInput!
+  ): Assessment
+
+  """
+  Registers the current user to a foundation assessment
+  """
+  createFoundationAssessment(
+    semesterModuleId: ID!
+    data: AssessmentCreateInput!
+  ): Assessment
+
+  """
+  Registers the current user to a STS assessment
+  """
+  createStsAssessment(
+    semesterModuleId: ID!
+    data: AssessmentCreateInput!
+  ): Assessment
+
+  """
+  Updates an assessments details
+  """
+  updateAssessment(assessmentId: ID!, data: AssessmentInput!): Assessment
+
+  """
+  Mark an absent `assessment` as either excused or not excused and publish the result
+  """
+  resolveAbsence(
+    assessmentId: ID!
+    assessmentStatus: AssessmentStatus!
+  ): Assessment
+
+  """
+  Mark multiple absent `assessment` as either excused or not excused and publish the result
+  """
+  batchResolveAbsence(
+    assessments: [ID!]!
+    assessmentStatus: AssessmentStatus!
+  ): [Assessment]
+
+  """
+  Publish the result of multiple assessments
+  """
+  batchPublishAssessments(assessments: [ID!]!): [Assessment]
+
+  """
+  Declines an alternative assessment proposal
+  """
+  declineAssessmentProposal(assessmentId: ID!): Assessment
+
+  """
+  Accepts an alternative assessment proposal
+  """
+  acceptAssessmentProposal(
+    assessmentId: ID!
+    data: AssessmentProposalInput!
+  ): Assessment
+
+  """
+  Declines an early assessment request
+  """
+  declineEarlyAssessment(assessmentId: ID!): Assessment
+
+  """
+  Schedules an early assesstment, effectively accepting the request
+  """
+  scheduleEarlyAssessment(
+    assessmentId: ID!
+    data: AssessmentProposalInput!
+  ): Assessment
+
+  """
+  Sets the assistant on the specified assessment
+  """
+  setAssessmentHelper(assessmentId: ID!, userId: ID!): Assessment
+
+  """
+  Sets the assessor on the specified assessment
+  """
+  setAssessmentAssessor(assessmentId: ID!, userId: ID!): Assessment
+
+  """
+  Removes the current assistant from the specified assessment
+  """
+  removeAssessmentHelper(assessmentId: ID!): Assessment
+
+  """
+  Mark all the assessments as ready for publishing
+  """
+  batchMarkReadyForPublishing(assessments: [ID!]!): [Assessment]
+
+  """
+  Refer all the selected assessments to the EO
+  """
+  batchReferToEo(assessments: [ID!]!): [Assessment]
+  addModuleToModuleHandbook(
+    moduleId: ID!
+    moduleHandbookId: ID!
+    type: ModuleHandbookModuleType!
+  ): Boolean
+  deleteModuleHandbookModule(moduleHandbookModuleId: ID!): Boolean
+  updateModuleHandbookModule(
+    moduleHandbookModuleId: ID!
+    data: ModuleHandbookModuleInput!
+  ): ModuleHandbookModule
+  addModuleToSemester(moduleId: ID!, semesterId: ID!): Boolean
+  assignEventGroupToSemesterModule(
+    semesterModuleId: ID!
+    eventGroupId: ID!
+  ): SemesterModule
+  unassignEventGroupFromSemesterModule(
+    semesterModuleId: ID!
+    eventGroupId: ID!
+  ): SemesterModule
+  updateSemesterModule(
+    semesterModuleId: ID!
+    data: SemesterModuleInput!
+  ): SemesterModule
+  proposeSemesterModuleChanges(
+    semesterModuleId: ID!
+    semesterId: ID
+    moduleShortCode: String
+    data: SemesterModuleInput!
+  ): SemesterModule
+  acceptSemesterModuleChanges(semesterModuleId: ID!): SemesterModule
+  declineSemesterModuleChanges(semesterModuleId: ID!): Semester
+  revokeAssessmentForSemesterModule(semesterModuleId: ID!): Boolean
+  syncGitLabGroups: Boolean!
+  createModuleHandbook(
+    studyProgramId: ID!
+    data: ModuleHandbookInput!
+  ): ModuleHandbook
+  updateModuleHandbook(
+    moduleHandbookId: ID!
+    studyProgramId: ID!
+    data: ModuleHandbookInput!
+  ): ModuleHandbook
+  linkModuleHandbookToUser(
+    moduleHandbookId: ID!
+    userId: ID!
+  ): StudentModuleHandbook
+  createModule(data: ModuleInput!): Module
+  updateModule(moduleId: ID!, data: ModuleInput!): Module
+  addComment(content: String!, updateId: ID!): UpdateComment
+  createProject(data: CreateProjectInput!): Project!
+  followProject(id: ID!, action: String!): Project!
+  updateProject(data: UpdateProjectInput!, id: ID!): Project!
+  archiveProject(id: ID!): Boolean!
+  unarchiveProject(id: ID!): Boolean!
+  setProjectSponsor(id: ID!, projectSponsorId: ID): Boolean!
+  carryOverProject(data: CarryOverProjectInput!): Project!
+  makeProjectOfficial(id: ID!): Boolean!
+  requestSignoff(id: ID!): Boolean!
+  requestCheckout(
+    id: ID!
+    teamMembers: [ProjectCheckoutRequestTeamMemberInput!]
+    portfolioDescription: String!
+  ): Boolean!
+  checkoutProject(id: ID!, accepted: Boolean!): Boolean!
+  inviteUsersToProject(
+    users: [ProjectInviteUserInput!]!
+    projectId: ID!
+  ): Boolean
+  acceptProjectInvite(projectId: ID!): Boolean
+  declineProjectInvite(projectId: ID!): Boolean
+  createTag(name: String!, category: TagCategory): Tag
+
+  """
+  Create a new learning resource
+  """
+  createLearningResource(data: LearningResourceInput!): LearningResource
+
+  """
+  Update a learning resource
+  """
+  updateLearningResource(
+    learningResourceId: ID!
+    data: LearningResourceInput!
+  ): LearningResource
+
+  """
+  Delete a learning resource
+  """
+  deleteLearningResource(learningResourceId: ID!): Boolean
+  markNotificationRead(id: ID!): Notification!
+
+  """
+  Leave an event
+  """
+  leaveEvent(eventId: ID!): Event
+
+  """
+  Rejoin an event
+  """
+  rejoinEvent(eventId: ID!): Event
+
+  """
+  Add an event to an event group
+  """
+  addEventToGroup(eventId: ID!, eventGroupId: ID!): Event
+
+  """
+  Remove an event from an event group
+  """
+  removeEventFromGroup(eventId: ID!): Event
+
+  """
+  Add a host to an event in an event group
+  """
+  updateEventHost(eventId: ID!, hostId: ID!): Event
+
+  """
+  Add a host to multiple events in an event group
+  """
+  batchUpdateEventHosts(events: [ID!]!, hostId: ID!): [Event]
+
+  """
+  Create an event group
+  """
+  createEventGroup(data: EventGroupInput!): EventGroup!
+
+  """
+  Update event group details
+  """
+  updateEventGroup(eventGroupId: ID!, data: EventGroupInput!): EventGroup!
+
+  """
+  Register for an event group
+  """
+  registerForEventGroup(eventGroupId: ID!): Boolean!
+
+  """
+  Leave an event group
+  """
+  unregisterFromEventGroup(eventGroupId: ID!): Boolean!
+
+  """
+  Delete an event group
+  """
+  deleteEventGroup(eventGroupId: ID!): Boolean!
+
+  """
+  Check if the given Slack name is available
+  """
+  checkSlackChannelNameAvailable(channelName: String!): Boolean!
+
+  """
+  Add a Slack channel to an event group
+  """
+  addSlackChannel(
+    eventGroupId: ID!
+    channelId: String
+    channelName: String
+  ): EventGroup!
+
+  """
+  Archive Slack channel for an event group
+  """
+  archiveSlackChannel(eventGroupId: ID!): EventGroup!
+
+  """
+  Add a participant to an event group
+  """
+  addParticipantToEventGroup(eventGroupId: ID!, participantId: ID!): Boolean!
+
+  """
+  Remove a participant from an event group
+  """
+  removeParticipantFromEventGroup(
+    eventGroupId: ID!
+    participantId: ID!
+  ): Boolean!
+  updateSemester(semesterId: ID!, data: SemesterUpdateInput!): Semester
+  createImportantSemesterDate(
+    data: ImportantSemesterDateCreateInput!
+  ): ImportantSemesterDate
+  editImportantSemesterDate(
+    id: ID!
+    data: ImportantSemesterDateCreateInput!
+  ): ImportantSemesterDate
+  deleteImportantSemesterDate(id: ID!): Boolean
+  createSemester(data: SemesterCreationInput!): Semester
+
+  """
+  Sign in the user using email and password and return a JWT token.
+  """
+  signin(email: String!, password: String!): AuthPayload
+
+  """
+  Sign in the user using the Google OAuth mechanism. See
+  [here](https://developers.google.com/identity/sign-in/web/reference). Takes
+  the code returned after the Google sign in process on the frontend and
+  validates the user based on that. Returns a token
+  """
+  googleSignin(code: String!): AuthPayload
+
+  """
+  Sends a password reset email to the user with the email specified
+  """
+  forgotPassword(email: String!): Boolean
+
+  """
+  Sets a new password for the user identified by the `set` token in the payload
+  """
+  setPassword(password: String!, set: String!): AuthPayload
+
+  """
+  Updates a users profile
+  """
+  updateUserProfile(userId: ID!, data: UpdateUserProfileInput!): User
+
+  """
+  Sync Slack user IDs
+  """
+  syncSlackUsers: Boolean!
+  updateUser(id: ID!, data: UserInput!): User
+  createUser(data: UserInput!): User
+  deleteJourneyDocument(id: ID!): Boolean
+  deleteObject(awsKey: String!): Boolean!
+
+  """
+  Submit a hand-in
+  """
+  submitHandin(handinId: ID!, data: [UserFormComponentsInput!]!): UserHandin
+
+  """
+  Update hand-in feedback
+  """
+  updateHandin(handinId: ID!, data: UpdateHandinInput!): UserHandin
+
+  """
+  Delete irrelevant user hand-ins
+  """
+  deleteSubmissions(userHandinIds: [ID!]): Boolean
+
+  """
+  Create a new hand-in
+  """
+  createModuleHandin(
+    data: ModuleHandinInput!
+    isPublished: Boolean = false
+  ): ModuleHandin!
+
+  """
+  Update hand-in details
+  """
+  updateModuleHandin(
+    moduleHandinId: ID!
+    data: ModuleHandinInput!
+    isPublished: Boolean = false
+  ): ModuleHandin!
+  duplicateModuleHandin(moduleHandinId: ID!): ModuleHandin
+  deleteModuleHandin(moduleHandinId: ID!, unpublish: Boolean = false): Boolean
+  addModuleToSemesterPlanner(
+    data: SemesterPlannerModuleInput!
+  ): SemesterPlannerModule!
+  removeModuleFromSemesterPlanner(id: ID!): SemesterPlannerModule
+  clearSemesterPlanner: SemesterPlanner!
+  updateSemesterPlannerModule(
+    data: UpdateSemesterPlannerModuleInput!
+  ): SemesterPlannerModule!
+}
+
+"""
+Represents the ECTS score that the user has collected for a given type of modules
+"""
+type MyECTSStats {
+  """
+  The total count of collected ECTS
+  """
+  collectedECTS: Float!
+
+  """
+  The total amount of ECTS needed for graduation
+  """
+  totalECTSNeeded: Float!
+}
+
+"""
+Represents a module the user has already been assessed in, paired with all the associated assessments
+"""
+type MyStudiesModule {
+  title: String!
+  shortCode: String!
+  moduleIdentifier: String
+  simpleShortCode: String
+  coordinator: User
+  status: String
+  assessments: [Assessment!]
+  moduleType: ModuleHandbookModuleType
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Represents the ECTS scores by module type that the user has collected
+"""
+type MyStudyData {
+  """
+  The ECTS stats for capstone projects
+  """
+  capstone: MyECTSStats!
+
+  """
+  The ECTS stats for theses
+  """
+  thesis: MyECTSStats!
+
+  """
+  The ECTS stats for orientation modules
+  """
+  orientation: MyECTSStats!
+
+  """
+  The ECTS stats for sts modules
+  """
+  sts: MyECTSStats!
+
+  """
+  The ECTS stats for mandatory modules
+  """
+  mandatory: MyECTSStats!
+
+  """
+  The ECTS stats for compulsory elective modules
+  """
+  compulsoryElective: MyECTSStats!
+
+  """
+  The ECTS stats for optional modules
+  """
+  elective: MyECTSStats!
+}
+
+"""
+Represents a total count of all modules that have been passed and ects that were collected
+"""
+type MyTotalModuleStats {
+  """
+  The total count of passed modules
+  """
+  totalModuleCount: Int!
+
+  """
+  The total score of collected ects
+  """
+  score: Float!
+}
+
+type NavLink {
+  label: String!
+  link: String!
+  icon: String!
+  disabled: Boolean
+  whitelistedRoles: [String!]!
+}
+
+type Notification {
+  """
+  This notifactions title/header text
+  """
+  title: String!
+
+  """
+  This notifcations body text/longer form message
+  """
+  label: String!
+
+  """
+  A link to the resource affected by the notification
+  """
+  link: String
+
+  """
+  Notates whether this notification has benn read yet.
+  """
+  read: Boolean
+
+  """
+  The urgency category of this notification
+  """
+  urgency: NotificationUrgency!
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Possible urgency categories for notifications
+"""
+enum NotificationUrgency {
+  INFO
+  IMPORTANT
+  URGENT
+}
+
+"""
+Input Object used for offset based pagination of list results
+"""
+input OffsetPaginationInput {
+  """
+  The desired number of elements returned per page
+  """
+  limit: Int! = 20
+
+  """
+  How many elements to skip before returning the first result
+  """
+  offset: Int
+}
+
+type PartnerCompany {
+  id: String!
+  slug: String!
+  domain: String!
+  color: String!
+  logoUrl: String!
+}
+
+type Permission {
+  roles: [UserRole]
+  name: String
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Project {
+  title: String!
+  isLookingForTeammates: Boolean
+  description: String!
+  coverUrl: String
+  outline: String
+  projectType: ProjectType
+  isArchived: Boolean!
+  isApproved: Boolean!
+  isCheckedOut: Boolean!
+  checkoutRequestDate: DateTime
+  projectSiblings: [Project]
+  signoffRequestDate: DateTime
+  portfolioDescription: String
+  originator: User
+  followers: [User!]
+  sponsor: User
+  memberships: [ProjectMembership!]!
+  tags: [Tag!]!
+  updates: [ProjectUpdate!]!
+  semesters: [Semester!]
+  activeMemberships: [ProjectMembership!]
+  invites: [ProjectInvite!]!
+  permissions: ProjectPermissions!
+  projectChanges: [ProjectChange!]!
+  isCurrentSemesterProject: Boolean
+  isRegisteredThisSemester: Boolean
+  isFutureProject: Boolean
+  currentUserMembership: ProjectMembership
+  isConsultantInvitationActive: Boolean
+  isSignoffRequestActive: Boolean
+  isProjectOwner: Boolean
+  activeCheckoutRequest: [ProjectChange!]
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input ProjectApprovalsFilter {
+  """
+  Fulltext search string
+  """
+  search: String
+
+  """
+  Sponsor assigned to the project
+  """
+  sponsor: String
+
+  """
+  Show only official CODE projects
+  """
+  officialProject: Boolean
+
+  """
+  Show only projects that have a sponsor
+  """
+  hasSponsor: Boolean
+
+  """
+  Show projects that are part of x semester
+  """
+  semester: String
+}
+
+type ProjectChange {
+  id: ID!
+  createdAt: DateTime!
+  type: ProjectChangeType!
+  title: String
+  description: String
+  portfolioDescription: String
+  outline: String
+  isApproved: Boolean
+  isCheckedOut: Boolean
+  project: Project
+  sponsor: User
+  update: ProjectUpdate
+  memberships: [ProjectMembership]
+  semester: Semester
+  projectCheckoutRequests: [ProjectCheckoutRequest!]
+}
+
+enum ProjectChangeType {
+  TITLE
+  DESCRIPTION
+  OUTLINE
+  SPONSOR
+  PROJECT_UPDATE
+  APPROVED
+  MEMBERS
+  CARRY_OVER
+  CHECKED_OUT
+  CHECKOUT_REQUESTED
+  CHECKOUT_DECLINED
+}
+
+type ProjectCheckoutRequest {
+  id: ID!
+  role: String
+  responsibilities: String
+  accepted: Boolean
+  createdAt: DateTime!
+  student: User
+}
+
+input ProjectCheckoutRequestTeamMemberInput {
+  userId: String!
+  role: String!
+  responsibilities: String!
+  tools: [String!]
+  keyLearnings: String
+}
+
+input ProjectFilter {
+  """
+  Fulltext search string
+  """
+  search: String
+
+  """
+  Show only official CODE projects
+  """
+  officialProject: Boolean
+
+  """
+  Show unofficial projects in the list
+  """
+  unOfficialProject: Boolean
+
+  """
+  Filter by a specific project type
+  """
+  projectType: ProjectType
+
+  """
+  Show projects that are archived
+  """
+  showArchived: Boolean
+
+  """
+  Show projects that are still looking for teammates
+  """
+  isLookingForTeammates: Boolean
+
+  """
+  Show projects that are part of x semester
+  """
+  semester: String
+
+  """
+  Show only projects that were created by the current user
+  """
+  myProjects: Boolean
+}
+
+input ProjectInput {
+  title: String!
+  description: String
+}
+
+type ProjectInvite {
+  user: User
+  sender: User
+  project: Project
+  isSponsor: Boolean
+  role: String
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Project invite user input
+"""
+input ProjectInviteUserInput {
+  """
+  The userId of the user to be added to this project
+  """
+  userId: ID!
+
+  """
+  Role this user is expected to play while working on this project
+  """
+  role: String!
+
+  """
+  Boolean indicating whether or not this invited user is a project sponsor
+  """
+  isSponsor: Boolean!
+}
+
+type ProjectMembership {
+  role: String
+  tools: [Tag!]
+  responsibilities: String
+  keyLearnings: String
+  startDate: DateTime!
+  endTime: DateTime
+  isOwner: Boolean
+  student: User
+  project: Project
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ProjectOutlineTemplate {
+  """
+  Template ID
+  """
+  id: String
+
+  """
+  Name of the template
+  """
+  name: String
+
+  """
+  Markdown template
+  """
+  template: String
+}
+
+type ProjectPermissions {
+  canEdit: Boolean!
+  canManage: Boolean!
+}
+
+enum ProjectRequirements {
+  OPTIONAL
+  ANY
+  OFFICIAL
+}
+
+input ProjectTeamMemberInput {
+  id: String!
+  name: String!
+  avatarUrl: String!
+  role: String!
+  startDate: String
+}
+
+enum ProjectType {
+  ORIENTATION
+  CORE_SOLO
+  CORE_TEAM
+  CODE
+  UNOFFICIAL
+  CAPSTONE
+}
+
+type ProjectUpdate {
+  title: String!
+  content: String!
+  imageUrls: [String!]!
+  needsHelp: Boolean!
+  needsFeedback: Boolean!
+  allowComments: Boolean!
+  tags: [Tag!]!
+  user: User
+  comments: [UpdateComment!]!
+  project: Project
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input ProjectUpdateFilter {
+  """
+  Fulltext search string
+  """
+  search: String
+
+  """
+  Fulltext search string for tags
+  """
+  tagSearch: String
+
+  """
+  Show projects update that needs help
+  """
+  needHelp: Boolean
+
+  """
+  Show projects update that needs feedback
+  """
+  needFeedback: Boolean
+}
+
+input ProjectUpdateInput {
+  title: String!
+  content: String!
+  needsHelp: Boolean
+  needsFeedback: Boolean
+  allowComments: Boolean!
+  tags: [String!]
+}
+
+enum ProposalStatus {
+  PROPOSED
+  REGISTERED
+  DECLINED
+  SCHEDULED
+  REVOKED
+  ASSESSING
+}
+
+type PublishedModuleHandin {
+  id: ID
+
+  """
+  Amount of tasks that are yet to be submitted
+  """
+  outstandingHandins: Int
+
+  """
+  Amount of submitted tasks
+  """
+  submittedHandins: Int
+  moduleHandin: ModuleHandin
+}
+
+input PublishedModuleHandinFilter {
+  """
+  Fulltext search string
+  """
+  search: String
+
+  """
+  Only show handins that were created by me
+  """
+  publishedByMe: Boolean
+
+  """
+  Show all Handins related to specific module
+  """
+  module: ID
+
+  """
+  Show all Handins related to specific semesterModule
+  """
+  semesterModule: ID
+
+  """
+  Show all Handins related to specific module identifier
+  """
+  moduleIdentifier: String
+}
+
+type Query {
+  underMaintanance: Boolean!
+  mySettings: UserSettings
+
+  """
+  get project updates by project id
+  """
+  projectUpdatesByProject(projectId: ID): [ProjectUpdate!]
+
+  """
+  get all project updates
+  """
+  projectUpdates(
+    pagination: OffsetPaginationInput
+    filter: ProjectUpdateFilter
+  ): [ProjectUpdate!]
+
+  """
+  counts project updates for pagination
+  """
+  projectUpdatesCount(filter: ProjectUpdateFilter): Int!
+  projectUpdatesTags: [Tag!]
+  followedProjectUpdates: [ProjectUpdate!]
+  studyPrograms: [StudyProgram!]!
+
+  """
+  Get a single assessment with the given assessmentId
+  """
+  assessment(assessmentId: ID!): Assessment
+
+  """
+  List assessments for a particular user filterable by proposalStatus
+  """
+  assessments(proposalStatus: ProposalStatus): [Assessment!]!
+
+  """
+  List forwarded assessments for a given user
+  """
+  forwardedAssessments(
+    pagination: OffsetPaginationInput
+    filter: AssessmentFilter
+  ): [Assessment!]!
+
+  """
+  Counts forwarded assessments for pagination
+  """
+  forwardedAssessmentsCount(filter: AssessmentFilter): Int!
+
+  """
+  Get a list of upcoming assessments for a user
+  """
+  myUpcomingAssessments(pagination: OffsetPaginationInput): [Assessment!]!
+
+  """
+  Counts myUpcomingAssessments for pagination
+  """
+  myUpcomingAssessmentsCount: Int!
+
+  """
+  List user's assessments
+  """
+  myAssessments(
+    pagination: OffsetPaginationInput
+    filter: AssessmentFilter
+
+    """
+    String representing sort order in which to return the assessment results in the form <FIELD>,<asc|desc>
+    """
+    sortKey: String
+    assessmentStyle: AssessmentStyle
+    proposalStatus: ProposalStatus
+  ): [Assessment!]!
+
+  """
+  Counts total number of myAssessments-Records
+  """
+  myAssessmentsCount(
+    filter: AssessmentFilter
+    assessmentStyle: AssessmentStyle
+    proposalStatus: ProposalStatus
+  ): Int!
+
+  """
+  List early assessment proposals for a given user
+  """
+  earlyAssessmentProposals(
+    pagination: OffsetPaginationInput
+    filter: AssessmentFilter
+  ): [Assessment!]!
+
+  """
+  List early assessment proposals for a given user
+  """
+  earlyAssessmentProposalsCount(filter: AssessmentFilter): Int!
+
+  """
+  Get a list of published assessments
+  """
+  myPublishedAssessments(moduleId: ID): [Assessment!]!
+
+  """
+  Get assessment statistics
+  """
+  assessmentStatistics: AssessmentStatistics
+
+  """
+  Get assessment statistics for a given user
+  """
+  myAssessmentStatistics: AssessmentStatistics
+
+  """
+  Get module and assessment statistics
+  """
+  moduleAndAssessmentStatistics: [ModuleAndAssessmentStatistic!]
+
+  """
+  Get module and assessment proposal statistics
+  """
+  moduleAndAssessmentProposalStatistics: [ModuleAndAssessmentProposalStatistic!]
+
+  """
+  Get ECTS statistics
+  """
+  ectsStatistics: [EctsStatistic!]
+  moduleHandbookModule(moduleHandbookModuleId: ID!): ModuleHandbookModule!
+  moduleHandbookModules: [ModuleHandbookModule!]!
+  moduleHandbookModulesByHandbook(moduleHandbookId: ID!): [ModuleHandbookModule]
+  semesterModule(
+    semesterModuleId: ID
+    moduleIdentifier: String
+    moduleShortCode: String
+  ): SemesterModule
+  semesterModules(
+    moduleHandbookId: ID
+    currentSemesterOnly: Boolean = false
+    futureSemesterOnly: Boolean = false
+    semesterId: ID
+  ): [SemesterModule!]!
+  activeSemesterModule(semesterModuleId: ID!): SemesterModule
+  semesterModulesBySemester(
+    semesterId: ID!
+    pagination: OffsetPaginationInput
+    filter: SemesterModuleFilter
+  ): [SemesterModule]
+  semesterModulesBySemesterCount(
+    semesterId: ID!
+    filter: SemesterModuleFilter
+  ): Int!
+  professorSemesterModules: [SemesterModule]
+  mySemesterModules(
+    pagination: OffsetPaginationInput
+    filter: SemesterModuleFilter
+  ): [ViewerSemesterModule]
+  mySemesterModulesCount(filter: SemesterModuleFilter): Int!
+  currentSemesterModules(
+    pagination: OffsetPaginationInput
+    filter: SemesterModuleFilter
+  ): [ViewerSemesterModule!]
+  currentSemesterModulesCount(filter: SemesterModuleFilter): Int!
+  latestModuleDescription(
+    semesterModuleId: ID!
+    semesterId: ID
+    moduleShortCode: String
+  ): SemesterModule
+  moduleHandbook(moduleHandbookId: ID!): ModuleHandbook!
+  moduleHandbooks(
+    pagination: OffsetPaginationInput
+    filter: ModuleHandbookFilter
+  ): [ModuleHandbook!]!
+  moduleHandbooksCount(filter: ModuleHandbookFilter): Int!
+  module(moduleId: ID!): Module!
+  modules(
+    pagination: OffsetPaginationInput
+    filter: ModuleFilter = {}
+    currentSemesterOnly: Boolean = false
+    futureSemesterOnly: Boolean = false
+  ): [Module!]!
+  modulesCount(
+    filter: ModuleFilter = {}
+    currentSemesterOnly: Boolean = false
+    futureSemesterOnly: Boolean = false
+  ): Int!
+
+  """
+  Returns all modules the user has been assessed in so far along with all published assessments
+  """
+  myStudies(filter: ModuleFilter): [MyStudiesModule]
+
+  """
+  Returns ECTS statistics by module type.
+  """
+  myModuleData(onlyMandatory: Boolean = false): MyStudyData
+
+  """
+  Returns the student handbook overview.
+  """
+  studentHandbookOverview(
+    userId: ID!
+    moduleHandbookId: ID
+  ): HandbookOverviewData
+
+  """
+  Returns a total count of all modules that have been passed and ECTS that were collected.
+  """
+  myTotalModuleStats(onlyMandatory: Boolean = false): MyTotalModuleStats
+  project(projectId: ID!): Project!
+  projects(
+    pagination: OffsetPaginationInput
+    filter: ProjectFilter
+  ): [Project!]!
+  projectsCount(filter: ProjectFilter): Int!
+  myProjects: [Project!]
+
+  """
+  Querying all of the profs sponsored projects
+  """
+  mySponsoredProjects: [Project!]!
+  projectApprovals(
+    pagination: OffsetPaginationInput
+    filter: ProjectApprovalsFilter
+  ): [Project!]
+  projectApprovalsCount(filter: ProjectApprovalsFilter): Int!
+  myProjectsAvailableForAssessments(semesterModuleId: ID!): [Project!]
+  projectOutlineTemplates: [ProjectOutlineTemplate!]
+  projectOutlineTemplate(templatePageId: String!): ProjectOutlineTemplate
+  projectInvites(pagination: OffsetPaginationInput): [ProjectInvite!]!
+  projectInvitesCount: Int!
+  department(departmentId: ID!): Department!
+  departments: [Department!]!
+  tags(category: TagCategory): [Tag!]!
+
+  """
+  Get details of a learning resource
+  """
+  learningResource(learningResourceId: ID!): LearningResource!
+
+  """
+  List learning resources
+  """
+  learningResources: [LearningResource!]!
+
+  """
+  List unassigned learning resources by semester module ID
+  """
+  unassignedLearningResourcesByModule(
+    semesterModuleId: ID!
+    pagination: OffsetPaginationInput
+    filter: LearningResourceFilter
+  ): [LearningResource!]!
+
+  """
+  Get a presigned S3 upload URL to be used in the frontend to upload a learning resource file
+  """
+  presignedLearningResourceUploadUrl(
+    createdAt: String!
+    fileName: String!
+    mimeType: String!
+  ): String
+
+  """
+  Get a signed S3 URL used to download a learning resource file
+  """
+  signedLearningResourceLink(createdAt: String!, key: String!): String
+
+  """
+  Returns the users most recent six `Notification`s
+  """
+  myNotifications: [Notification!]!
+
+  """
+  Get details of a single event
+  """
+  event(eventId: ID!): Event!
+
+  """
+  List events visible to the currently logged in user
+  """
+  events: [Event!]!
+
+  """
+  List unassigned events accessible by the currently logged in user
+  """
+  unassignedEvents: [Event!]!
+
+  """
+  List all upcoming events visible to the currently logged in user
+  """
+  upcomingEvents: [Event!]!
+
+  """
+  List upcoming events that concern the currently logged in user - where the user is an event organizer or attendee
+  """
+  myUpcomingEvents(pagination: OffsetPaginationInput): [Event]
+
+  """
+  List upcoming academic events
+  """
+  academicEvents: [Event]
+
+  """
+  List upcoming non-academic events
+  """
+  nonAcademicEvents: [Event]
+
+  """
+  Get details of an event group by event group ID
+  """
+  eventGroup(eventGroupId: ID!): EventGroup!
+
+  """
+  List event groups
+  """
+  eventGroups(
+    type: EventGroupType
+    pagination: OffsetPaginationInput
+    filter: EventGroupFilter
+    organizing: Boolean
+    attending: Boolean
+  ): [EventGroup!]!
+
+  """
+  Counts event groups for pagination
+  """
+  eventGroupsCount(
+    type: EventGroupType
+    filter: EventGroupFilter
+    organizing: Boolean
+    attending: Boolean
+  ): Int!
+
+  """
+  Lists event groups of the current user - where current user is organizer or is attending
+  """
+  myEventGroups(
+    departmentAbbreviation: String
+    currentSemesterOnly: Boolean
+    type: EventGroupType
+    filter: EventGroupFilter
+  ): [EventGroup!]!
+
+  """
+  Get all event groups which have no related modules
+  """
+  unassignedEventGroupsByModule(
+    semesterModuleId: ID!
+    pagination: OffsetPaginationInput
+  ): [EventGroup!]!
+  semester(semesterId: ID!): Semester
+  semesters(
+    pagination: OffsetPaginationInput
+    fromCurrentSemester: Boolean
+    fromPreviousSemester: Boolean
+  ): [Semester!]!
+  semestersCount(
+    fromCurrentSemester: Boolean
+    fromPreviousSemester: Boolean
+  ): Int!
+  currentSemester: Semester
+  nextSemester: Semester
+  importantSemesterDate(id: ID!): ImportantSemesterDate
+
+  """
+  Get a user's details based on the user's ID
+  """
+  user(userId: ID!): User!
+
+  """
+  List all registered users
+  """
+  users(pagination: OffsetPaginationInput, filter: UserFilter): [User!]!
+
+  """
+  counts users list for pagination
+  """
+  userCount(filter: UserFilter): Int!
+
+  """
+  List all module current coordinators
+  """
+  coordinatorUsers: [User!]!
+
+  """
+  List all students
+  """
+  students(pagination: OffsetPaginationInput, filter: StudentFilter): [User!]!
+
+  """
+  Counts all students
+  """
+  studentsCount(filter: StudentFilter): Int!
+
+  """
+  List all professors
+  """
+  professors: [User!]!
+
+  """
+  Get the currently logged in user's details
+  """
+  me: User!
+  putObjectUrl(
+    createdAt: String!
+    fileName: String!
+    mimeType: String!
+    uploadTarget: String!
+  ): String
+  getObjectUrl(awsKey: String!): String!
+
+  """
+  Returns all distinct user skills
+  """
+  userSkills: [UserSkill!]!
+  partnerCompany(slug: String!): PartnerCompany
+  auditEntries(type: String!, id: ID!): [AuditEntry!]!
+
+  """
+  List all unsubmitted hand-ins for this user
+  """
+  currentHandins(
+    pagination: OffsetPaginationInput
+    filter: ModuleHandinFilter
+  ): [UserHandin!]!
+
+  """
+  Count all unsubmitted hand-ins for this user
+  """
+  currentHandinsCount(filter: ModuleHandinFilter): Int!
+
+  """
+  List all of the current user's hand-in submissions
+  """
+  submittedHandins(
+    pagination: OffsetPaginationInput
+    filter: ModuleHandinFilter
+  ): [UserHandin!]!
+
+  """
+  Count all of the current user's hand-in submissions
+  """
+  submittedHandinsCount(filter: ModuleHandinFilter): Int!
+
+  """
+  List all handins that can be assessed by the current user
+  """
+  userHandinsTable(
+    pagination: OffsetPaginationInput
+    filter: UserHandinTableFilter
+
+    """
+    String representing sort order in which to return the assessment results in the form <FIELD>,<asc|desc>
+    """
+    sortKey: String
+  ): [UserHandin!]!
+
+  """
+  Count all handins that can be assessed by the current user
+  """
+  userHandinsTableCount(filter: UserHandinTableFilter): Int!
+
+  """
+  Get details of a single hand-in submission
+  """
+  userHandin(handinId: ID!): UserHandin
+
+  """
+  Gets the semester wide hand-in deadline for a module
+  """
+  handinDeadline(semesterModuleId: ID): DateTime
+
+  """
+  Get details of a hand-in
+  """
+  moduleHandin(moduleHandinId: ID!): ModuleHandin
+
+  """
+  Get all published hand-ins / hand-ins visible to the current user
+  """
+  publishedModuleHandins(
+    pagination: OffsetPaginationInput
+    filter: PublishedModuleHandinFilter
+  ): [PublishedModuleHandin!]
+
+  """
+  Count all published hand-ins / hand-ins visible to the current user
+  """
+  publishedModuleHandinsCount(filter: PublishedModuleHandinFilter): Int!
+  syncSemesterPlanner(syncAssessments: Boolean = true): SemesterPlanner
+
+  """
+  Returns all AnnouncementMessages
+  """
+  announcementMessages: [AnnouncementMessage!]!
+}
+
+enum ResourceMedium {
+  BOOK
+  VIDEO
+  COURSE
+  ARTICLE
+  AUDIO
+  MISC
+  META
+}
+
+type Semester {
+  name: String!
+  isActive: Boolean!
+  startDate: DateTime!
+  endDate: DateTime!
+  moduleStandardRegistrationStartDate: DateTime
+  moduleStandardRegistrationEndDate: DateTime
+  moduleAlternativeRegistrationStartDate: DateTime
+  moduleAlternativeRegistrationEndDate: DateTime
+  moduleEarlyRegistrationStartDate: DateTime
+  moduleEarlyRegistrationEndDate: DateTime
+  moduleAssessmentPhaseStartDate: DateTime
+  moduleAssessmentPhaseEndDate: DateTime
+  moduleReassessmentRegistrationPhaseStartDate: DateTime
+  moduleReassessmentRegistrationPhaseEndDate: DateTime
+  moduleReassessmentPhaseStartDate: DateTime
+  moduleReassessmentPhaseEndDate: DateTime
+  moduleGradePublishedDeadline: DateTime
+  moduleEditDeadline: DateTime
+  projectApplicationPhaseStartDate: DateTime
+  projectApplicationPhaseEndDate: DateTime
+  projectIdeaHandInStartDate: DateTime
+  projectIdeaHandInEndDate: DateTime
+  projectOutlineHandInStartDate: DateTime
+  projectOutlineHandInEndDate: DateTime
+  projectSignoffRequestDeadline: DateTime
+  projectSignoffDeadline: DateTime
+  projectConsultantInvitationDeadline: DateTime
+  barcampSlotBookingStartDate: DateTime
+  barcampSlotBookingEndDate: DateTime
+  academicEventRegistrationStartDate: DateTime
+  academicEventRegistrationEndDate: DateTime
+  pppStartDate: DateTime
+  pppEndDate: DateTime
+  handinIdDeadline: DateTime
+  handinIsDeadline: DateTime
+  handinOsDeadline: DateTime
+  handinPmDeadline: DateTime
+  handinSeDeadline: DateTime
+  handinStsDeadline: DateTime
+  handinCustomDeadline: JSON
+  projects: [Project!]
+  nextSemester: Semester
+  previousSemester: Semester
+  isOutlineHandinActive: Boolean!
+  activeReassessmentRegistrationPhase: Boolean
+  activeAcademicEventRegistrationPhase: Boolean
+  activePPP: Boolean
+  activeModuleEdit: Boolean
+  isPitchActive: Boolean!
+  importantSemesterDates(
+    filter: ImportantSemesterDateFilter
+  ): [ImportantSemesterDateView]
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input SemesterCreationInput {
+  name: String!
+  abbreviation: String
+  startDate: DateTime!
+  endDate: DateTime!
+}
+
+enum SemesterDateVisibility {
+  STUDENT_ONLY
+  FACULTY_ONLY
+  ALL
+}
+
+type SemesterModule {
+  description: String!
+  levelExpectations: String!
+  standardAssessmentInstructions: String!
+  alternativeAssessmentInstructions: String!
+  moduleIdentifier: String
+  foundationAssessmentInstructions: String
+  earlyAssessmentInstructions: String
+  allowsEarlyAssessment: Boolean
+  allowsFoundationAssessment: Boolean
+  disabledAlternativeAssessment: Boolean
+  allowsRegistration: Boolean
+  allowProjectLinks: Boolean
+  isDraft: Boolean
+  customRegistrationDeadline: DateTime
+  projectRequirement: ProjectRequirements
+  primaryAssessor: User
+  module: Module
+  semester: Semester
+  eventGroups: [EventGroup!]!
+  updates: [ModuleUpdate!]!
+  standardAssessmentDefaultHandIns: [ModuleHandin!]!
+  activeStandardRegistrationPhase: Boolean
+  activeAlternativeRegistrationPhase: Boolean
+  activeEarlyAssessmentRegistrationPhase: Boolean
+  isNotEdited: Boolean!
+  hasDuplicate: Boolean
+  nextModules: [SemesterModule!]!
+  slackLink: String
+  grants: [String]
+  permissions: SemesterModulePermissions
+  currentAssessment: Assessment
+  status: String
+  highestGrade: String
+  latestAssessment(declined: Boolean): Assessment
+  availableForFoundation: Boolean
+  registrationCount(assessmentStyle: AssessmentStyle!): Int
+  openProposalCount: Int
+  versions: [ViewerSemesterModule]
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input SemesterModuleFilter {
+  """
+  Fulltext search string
+  """
+  search: String
+
+  """
+  Show only modules which are mandatory/elective for the current user
+  """
+  onlyMandatory: Boolean
+
+  """
+  Show only modules belonging to the respective department
+  """
+  department: String
+
+  """
+  Show only modules coordinated by the given user
+  """
+  coordinator: ID
+
+  """
+  Show only modules passed by the current user
+  """
+  passed: Boolean
+
+  """
+  Show only modules failed by the current user
+  """
+  failed: Boolean
+
+  """
+  Show only modules that allow alternative assessment
+  """
+  alternativeAssessment: Boolean
+
+  """
+  Show only modules that allow early assessment
+  """
+  earlyAssessment: Boolean
+
+  """
+  Abbreviation of the semester, usually `(FS/SS){Year}
+  """
+  semester: String
+}
+
+input SemesterModuleInput {
+  description: String!
+  levelExpectations: String!
+  standardAssessmentInstructions: String!
+  alternativeAssessmentInstructions: String!
+  foundationAssessmentInstructions: String!
+  earlyAssessmentInstructions: String
+  allowsEarlyAssessment: Boolean
+  allowsRegistration: Boolean
+  customRegistrationDeadline: DateTime
+  allowProjectLinks: Boolean
+  allowsFoundationAssessment: Boolean
+  allowsAlternativeAssessment: Boolean
+  projectRequirement: ProjectRequirements!
+  primaryAssessor: ID
+  linkedHandins: [ID!]
+}
+
+input SemesterModuleMCInput {
+  eventGroups: [String!]!
+}
+
+type SemesterModulePermissions {
+  canManage: Boolean
+  canManageFutureModule: Boolean
+  canEdit: Boolean
+}
+
+input SemesterModuleUpdateInput {
+  content: String!
+}
+
+type SemesterPlanner {
+  user: User
+  firstSemester: Semester
+  modules: [SemesterPlannerModule!]
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SemesterPlannerModule {
+  semestersFromStart: Int!
+  notes: String!
+  links: JSON!
+  checkList: JSON!
+  module: Module
+  semesterPlanner: SemesterPlanner
+  projects: [Project!]!
+  assessment: Assessment
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input SemesterPlannerModuleInput {
+  semesterPlannerId: ID!
+  moduleId: ID!
+  semestersFromStart: Int!
+  links: JSON!
+  notes: String!
+  checkList: JSON!
+}
+
+input SemesterUpdateInput {
+  name: String!
+  isActive: Boolean!
+  startDate: DateTime!
+  endDate: DateTime!
+  nextSemester: ID
+  moduleStandardRegistrationStartDate: DateTime
+  moduleStandardRegistrationEndDate: DateTime
+  moduleAlternativeRegistrationStartDate: DateTime
+  moduleAlternativeRegistrationEndDate: DateTime
+  moduleEarlyRegistrationStartDate: DateTime
+  moduleEarlyRegistrationEndDate: DateTime
+  moduleAssessmentPhaseStartDate: DateTime
+  moduleAssessmentPhaseEndDate: DateTime
+  moduleReassessmentRegistrationPhaseStartDate: DateTime
+  moduleReassessmentRegistrationPhaseEndDate: DateTime
+  moduleReassessmentPhaseStartDate: DateTime
+  moduleReassessmentPhaseEndDate: DateTime
+  moduleGradePublishedDeadline: DateTime
+  moduleEditDeadline: DateTime
+  projectApplicationPhaseStartDate: DateTime
+  projectApplicationPhaseEndDate: DateTime
+  projectIdeaHandInStartDate: DateTime
+  projectIdeaHandInEndDate: DateTime
+  projectOutlineHandInStartDate: DateTime
+  projectOutlineHandInEndDate: DateTime
+  projectSignoffRequestDeadline: DateTime
+  projectSignoffDeadline: DateTime
+  projectConsultantInvitationDeadline: DateTime
+  barcampSlotBookingStartDate: DateTime
+  barcampSlotBookingEndDate: DateTime
+  academicEventRegistrationStartDate: DateTime
+  academicEventRegistrationEndDate: DateTime
+  pppStartDate: DateTime
+  pppEndDate: DateTime
+  handinSeDeadline: DateTime
+  handinIdDeadline: DateTime
+  handinPmDeadline: DateTime
+  handinIsDeadline: DateTime
+  handinOsDeadline: DateTime
+  handinStsDeadline: DateTime
+  handinCustomDeadline: [HandinCustomDeadlineInput!]
+}
+
+input StudentFilter {
+  search: String
+  department: String
+}
+
+type StudentModuleHandbook {
+  acceptedAt: DateTime!
+  rejectedAt: DateTime
+  student: User
+  moduleHandbook: ModuleHandbook
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type StudyProgram {
+  name: String!
+  abbreviation: String!
+  description: String
+  backgroundImageUrl: String
+  moduleHandbooks: [ModuleHandbook!]
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Tag {
+  name: String!
+  skills: [UserSkill!]!
+  category: TagCategory
+  skillCount: Int!
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Possible categories tags can fall into.
+"""
+enum TagCategory {
+  GENERAL
+  METHOD
+  TOOL
+  RESOURCE
+  TECHNOLOGY
+}
+
+enum TeachingFormat {
+  LECTURE
+  SEMINAR_OR_WORKSHOP
+  PROJECT_WORK
+  CASE_STUDY
+  PRACTICE_SESSION
+  COLLOQUIUM
+  BACHELORS_THESIS
+  COURSE
+  SEMINAR
+}
+
+input UnofficialProjectInput {
+  title: String!
+  description: String!
+  tags: [String!]!
+}
+
+type UpdateComment {
+  content: String!
+  update: ProjectUpdate
+  user: User
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input UpdateHandinInput {
+  handinFeedback: String
+  assessmentFeedback: String
+  grade: Float
+  inMarking: Boolean
+  requiresOralAssessment: Boolean
+  readyForPublishing: Boolean
+  published: Boolean
+  internalNotes: String
+}
+
+input UpdateProjectInput {
+  title: String!
+  coverUrl: String
+  description: String!
+  outline: String!
+  sponsor: ID
+  isLookingForTeammates: Boolean!
+  tags: [String!]
+  semesters: [String!]!
+  projectType: ProjectType
+  teamMembers: [ProjectTeamMemberInput!]!
+  tools: [String!]
+  responsibilities: String
+  keyLearnings: String
+  portfolioDescription: String
+}
+
+input UpdateSemesterPlannerModuleInput {
+  id: ID!
+  links: JSON!
+  notes: String!
+  checkList: JSON!
+}
+
+input UpdateUserProfileInput {
+  githubHandle: String
+  twitterHandle: String
+  linkedInHandle: String
+  bio: String
+  phone: String
+  avatarUrl: String
+  skills: [UserSkillInput!]
+}
+
+input Upload {
+  fileName: String!
+  link: String!
+  key: String!
+  fileType: FileType!
+}
+
+type User {
+  firstName: String!
+  lastName: String!
+  name: String!
+  email: String!
+  avatarUrl: String
+  currentSession: DateTime!
+  prevSession: DateTime!
+  role: UserRole!
+  slackId: String
+  bio: String
+  phone: String
+  moduleHandbooks(current: Boolean): [StudentModuleHandbook!]
+  eventGroupParticipations: [EventGroupParticipations!]!
+  projectMemberships: [ProjectMembership!]!
+  skills: [UserSkill!]!
+  consultationCapacity: Int
+  consultationCount: Int
+  consultationRequestCount: Int
+  projectsFollowed: [Project!]!
+  inactive: Boolean
+  githubHandle: String
+  linkedInHandle: String
+  twitterHandle: String
+  userEventStreamLink: String
+  moduleHandIns: [ModuleHandin!]
+  permissions: JSON
+  slackLink: String
+  googleChatLink: String
+
+  """
+  List the current users's mandatory modules
+  """
+  mandatoryModules: [String!]
+
+  """
+  Whether or not the currently logged in user can edit this user's details
+  """
+  canEdit: Boolean
+
+  """
+  Whether or not the currently logged in user can view this user's details
+  """
+  canViewDetails: Boolean
+
+  """
+  List the grants available to this user
+  """
+  grants: [String!]!
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input UserFilter {
+  search: String
+  role: UserRole
+  tagSearch: String
+}
+
+type UserFormComponent {
+  id: ID!
+  handinFormComponent: FormComponent
+  content: String!
+}
+
+input UserFormComponentsInput {
+  handinFormComponent: ID!
+  type: String!
+  content: String!
+}
+
+type UserHandin {
+  deadline: DateTime
+  submittedAt: DateTime
+  user: User
+  userFormComponents: [UserFormComponent!]!
+  feedback: String
+  handin: ModuleHandin
+
+  """
+  Gets the latest assessment associated with the module linked to this hand-in
+  """
+  latestAssessment: Assessment
+
+  """
+  Current status of the hand-in - whether or not feedback has been given or if the hand-in has been submitted etc.
+  """
+  status: HandinStatus!
+
+  """
+  Current workflow status of the hand-in - at what stage of marking is the hand-in
+  """
+  workflowStatus: WorkflowStatus!
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input UserHandinTableFilter {
+  """
+  Show all hand ins from a student with this name
+  """
+  student: String
+
+  """
+  Show all hand ins from an assessor with this name
+  """
+  assessor: String
+
+  """
+  Show all userHandins from this moduleHandin
+  """
+  handin: ID
+
+  """
+  Show all Handins related to specific module
+  """
+  module: ID
+
+  """
+  Show all Handins related to specific event
+  """
+  event: ID
+
+  """
+  Show all Handins related to specific semester
+  """
+  semester: ID
+
+  """
+  Show all Handins with a certain status
+  """
+  status: ID
+
+  """
+  Show all Handins with a certain workflow status
+  """
+  workflowStatus: WorkflowStatus
+
+  """
+  String representing sort order in which to return the assessment results in the form <FIELD>,<asc|desc>
+  """
+  sortKey: String
+}
+
+input UserInput {
+  firstName: String!
+  lastName: String!
+  role: UserRole!
+  inactive: Boolean!
+  email: String!
+  skills: [UserSkillInput!]
+}
+
+"""
+Access/Account Level Roles a user can assume
+"""
+enum UserRole {
+  ADMIN
+  STAFF
+  PROFESSOR
+  WORKING_STUDENT
+  STUDENT
+  ORIENTATION_STUDENT
+  FUTURE_STUDENT
+  APPLICANT
+  PARTNER
+  LECTURER
+  EXAMINATION_OFFICE
+  HEAD_OF_PROJECTS
+  RELATIONS_MANAGER
+  EXTERNAL_STUDENT
+}
+
+type UserSettings {
+  assessmentEmailsEnabled: Boolean!
+  consultationCapacity: Int
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type UserSkill {
+  id: ID!
+  user: User
+  skill: Tag
+  isHighlighted: Boolean
+}
+
+input UserSkillInput {
+  name: String!
+  isHighlighted: Boolean
+}
+
+"""
+This module type is returned if the viewer coordinates this module.
+"""
+type ViewerCoordinatedSemesterModule implements ViewerSemesterModule {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  """
+  A large text describing everything the student needs to know about this  module. These
+  instructions might be different each semester.
+  """
+  description: String
+
+  """
+  Indicates whether or not ths module is in draft status
+  """
+  isDraft: Boolean
+
+  """
+  Indicates whether a custom registration deadline is set instead of the default one
+  """
+  customRegistrationDeadline: DateTime
+
+  """
+  The module for this semester module. A semester module is a specific offering of a module
+  during a certain semester. Which module is offered can be queried through this field.
+  """
+  module: Module
+
+  """
+  Module identifier for the semester module
+  """
+  moduleIdentifier: String
+  eventGroups: [EventGroup!]
+  primaryAssessor: User
+  semester: Semester
+  hasDuplicate: Boolean
+
+  """
+  Indicate whether or not registration is allowed and open for this module
+  """
+  allowsRegistration: Boolean
+
+  """
+  Number of alternative assessment proposals for this module.
+  """
+  openProposalsCount: Int
+
+  """
+  Number of alternative assessment proposals for this module.
+  """
+  openAssessmentsCount: Int
+}
+
+"""
+This interface type is returned for semester modules. If a module is offered during a certain
+semester, a new semester module entity is created. It can be used to connect specific data
+about this module during a semester.
+"""
+interface ViewerSemesterModule {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  """
+  A large text describing everything the student needs to know about this  module. These
+  instructions might be different each semester.
+  """
+  description: String
+
+  """
+  Indicates whether or not ths module is in draft status
+  """
+  isDraft: Boolean
+
+  """
+  Indicates whether a custom registration deadline is set instead of the default one
+  """
+  customRegistrationDeadline: DateTime
+
+  """
+  The module for this semester module. A semester module is a specific offering of a module
+  during a certain semester. Which module is offered can be queried through this field.
+  """
+  module: Module
+
+  """
+  Module identifier for the semester module
+  """
+  moduleIdentifier: String
+  eventGroups: [EventGroup!]
+  primaryAssessor: User
+  semester: Semester
+  hasDuplicate: Boolean
+
+  """
+  Indicate whether or not registration is allowed and open for this module
+  """
+  allowsRegistration: Boolean
+}
+
+"""
+This module type is returned if the viewer is enrolled in this module or has been enrolled in the past. Module
+assessments can be taken again to improve the grade, therefore a module can have a passed grade and at the same
+time be in a `REGISTERED` state.
+"""
+type ViewerTakenSemesterModule implements ViewerSemesterModule {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  """
+  A large text describing everything the student needs to know about this  module. These
+  instructions might be different each semester.
+  """
+  description: String
+
+  """
+  Indicates whether or not ths module is in draft status
+  """
+  isDraft: Boolean
+
+  """
+  Indicates whether a custom registration deadline is set instead of the default one
+  """
+  customRegistrationDeadline: DateTime
+
+  """
+  The module for this semester module. A semester module is a specific offering of a module
+  during a certain semester. Which module is offered can be queried through this field.
+  """
+  module: Module
+
+  """
+  Module identifier for the semester module
+  """
+  moduleIdentifier: String
+  eventGroups: [EventGroup!]
+  primaryAssessor: User
+  semester: Semester
+  hasDuplicate: Boolean
+
+  """
+  Indicate whether or not registration is allowed and open for this module
+  """
+  allowsRegistration: Boolean
+  status: String
+  currentAssessment: Assessment
+  highestGrade: String
+  latestAssessment(declined: Boolean): Assessment
+}
+
+"""
+This module is returned for modules, that are not taken or coordinated by the viewer. This is the type that acts as
+a default case and only implements the standard fields if the interface.
+"""
+type ViewerUnassociatedSemesterModule implements ViewerSemesterModule {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  """
+  A large text describing everything the student needs to know about this  module. These
+  instructions might be different each semester.
+  """
+  description: String
+
+  """
+  Indicates whether or not ths module is in draft status
+  """
+  isDraft: Boolean
+
+  """
+  Indicates whether a custom registration deadline is set instead of the default one
+  """
+  customRegistrationDeadline: DateTime
+
+  """
+  The module for this semester module. A semester module is a specific offering of a module
+  during a certain semester. Which module is offered can be queried through this field.
+  """
+  module: Module
+
+  """
+  Module identifier for the semester module
+  """
+  moduleIdentifier: String
+  eventGroups: [EventGroup!]
+  primaryAssessor: User
+  semester: Semester
+  hasDuplicate: Boolean
+
+  """
+  Indicate whether or not registration is allowed and open for this module
+  """
+  allowsRegistration: Boolean
+}
+
+"""
+Computed Status indicating the state the assessment is in at the moment
+"""
+enum WorkflowStatus {
+  REGISTERED
+  UNMARKED
+  REFERRED_TO_EO
+  PUBLISHED
+  IN_MARKING
+  READY_FOR_PUBLISHING
+}
