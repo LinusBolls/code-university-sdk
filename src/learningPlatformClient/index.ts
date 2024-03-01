@@ -1,8 +1,15 @@
 import { GraphQLClient, gql } from 'graphql-request';
 import { RequestConfig } from './requestConfig';
-import { getAuthHeaders, getNewToken } from './auth';
+import {
+  getAuthHeaders,
+  getLearningPlatformAccessToken,
+  getRefreshedLearningPlatformAccessToken,
+} from './auth';
 import { config } from '../config';
-import { assertGoogleCookieWasIssuedForLearningPlatform } from './googleCookie';
+import {
+  assertGoogleAccessToken,
+  assertLearningPlatformAccessToken,
+} from './jwt';
 import { LearningPlatformRequest } from './requests';
 import { LearningPlatformQueryExecutor } from './learningPlatformQueryExecutor';
 
@@ -10,7 +17,7 @@ export interface LearningPlatformClientOptions {
   /** defaults to https://api.app.code.berlin/graphql */
   graphqlBaseUrl?: string;
   /** defaults to https://api.app.code.berlin */
-  authBaseUrl?: string;
+  baseUrl?: string;
 }
 
 /**
@@ -28,20 +35,16 @@ export class LearningPlatformClient {
   private accessToken: string | null;
 
   public readonly graphqlBaseUrl: string;
-  public readonly authBaseUrl: string;
-
-  public readonly googleCookie: string;
+  public readonly baseUrl: string;
 
   private constructor(
     accessToken: string | null,
-    googleCookie: string,
     options?: LearningPlatformClientOptions
   ) {
     this.graphqlBaseUrl = options?.graphqlBaseUrl || config.graphqlBaseUrl;
-    this.authBaseUrl = options?.authBaseUrl || config.authBaseUrl;
+    this.baseUrl = options?.baseUrl || config.baseUrl;
 
     this.accessToken = accessToken;
-    this.googleCookie = googleCookie;
 
     this.graphqlClient = new GraphQLClient(this.graphqlBaseUrl, {
       headers: getAuthHeaders(this.accessToken),
@@ -71,23 +74,33 @@ export class LearningPlatformClient {
     this.graphqlClient.request(query)
   );
 
-  /**
-   * will throw an error if
-   * (1) the cookie doesn't match the expected format (`_ga=...; _ga_5SRD47N151=...; cid=...`)
-   * (2) the cookie wasn't issued for the learning platform
-   */
-  static async fromGoogleCookie(
-    googleCookie: string,
+  static async fromAccessToken(
+    accessToken: string,
     options?: LearningPlatformClientOptions
   ) {
-    assertGoogleCookieWasIssuedForLearningPlatform(googleCookie);
+    assertLearningPlatformAccessToken(accessToken);
 
     return new LearningPlatformClient(
-      null,
-      googleCookie,
+      accessToken,
       options
     ) as unknown as LearningPlatformClient & LearningPlatformQueryExecutor;
   }
+
+  static async fromGoogleAccessToken(
+    googleAccessToken: string,
+    options?: LearningPlatformClientOptions
+  ) {
+    assertGoogleAccessToken(googleAccessToken);
+
+    const data = await getLearningPlatformAccessToken(
+      options?.graphqlBaseUrl || config.graphqlBaseUrl,
+      googleAccessToken
+    );
+    const accessToken = data.data.googleSignin.token;
+
+    return LearningPlatformClient.fromAccessToken(accessToken, options);
+  }
+
   private handleError<Args extends unknown[], Return>(
     func: (...args: Args) => Return
   ): (...args: Args) => Return {
@@ -100,7 +113,7 @@ export class LearningPlatformClient {
         );
 
         if (isInvalidToken) {
-          await this.getNewToken();
+          await this.refreshAccessToken();
 
           try {
             return await func(...args);
@@ -113,22 +126,21 @@ export class LearningPlatformClient {
       }
     }.bind(this);
   }
-  private async getNewToken() {
-    const res = await getNewToken(
-      this.authBaseUrl,
-      this.googleCookie,
+  private async refreshAccessToken() {
+    const data = await getRefreshedLearningPlatformAccessToken(
+      this.baseUrl,
       this.accessToken
     );
 
-    if (!res.ok)
+    if (!data.ok)
       throw new Error(
-        'CodeUniversity.LearningPlatformClient.Auth: Failed to get new access token'
+        `CodeUniversity.LearningPlatformClient.refreshAccessToken: Failed to refresh access token. (response: ${JSON.stringify(data)})`
       );
 
-    this.accessToken = res.token;
+    this.accessToken = data.token;
 
     this.graphqlClient.setHeaders(getAuthHeaders(this.accessToken));
 
-    return res.token;
+    return data.token;
   }
 }

@@ -4,9 +4,9 @@ Functionality and data related to CODE University of Applied Sciences (https://c
 
 ## Tested with
 
-[CODE Learning Platform](https://app.code.berlin) v2.13.3
-NodeJs v20.5.1
-NPM v9.8.0
+- [CODE Learning Platform](https://app.code.berlin) v2.13.3
+- NodeJs v20.5.1
+- NPM v9.8.0
 
 ## Install
 
@@ -23,8 +23,8 @@ npm install code-university
 import { LearningPlatformClient } from 'code-university';
 
 async function main() {
-  const learningPlatform = await LearningPlatformClient.fromGoogleCookie(
-    process.env.GOOGLE_COOKIE
+  const learningPlatform = await LearningPlatformClient.fromAccessToken(
+    process.env.LEARNING_PLATFORM_ACCESS_TOKEN
   );
   const settings = await learningPlatform.getOwnSettings();
 
@@ -33,15 +33,12 @@ async function main() {
 main();
 ```
 
-## Retrieving your cookie from the CODE Learning Platform
+## Retrieving an access token from the CODE Learning Platform
 
 1. Open https://app.code.berlin
-2. Open the network tab of the browser devtools using `Cmd + Shift + I` on mac or `Ctrl + Shift + I` on windows
-3. In the network tab, filter by `graphql`
-4. Reload the page to see new requests coming in
-5. Right-click any of the requests are NOT of type `preflight`, hover over `Copy`, and click `Copy as cURL`
-6. Paste the resulting string in a text editor of your choice and copy the cookie value
+2. Open the browser devtools using `Cmd + Shift + I` on mac or `Ctrl + Shift + I` on windows
+3. Click on the `Application` tab
+4. On the left side of the `Application` tab, click `Cookies` > `https://app.code.berlin`
+5. Double-click the `Value` field of the `cid` cookie, and copy it to your clipboard.
 
-![Screenshot of step 3](docs/graphql-filter.webp)
-![Screenshot of step 5](docs/copy-as-curl.webp)
-![Screenshot of step 6](docs/curl-command.webp)
+![Screenshot of the cookies tab](docs/getting-your-access-token.webp)

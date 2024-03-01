@@ -2,45 +2,57 @@ import { describe, it, expect } from "vitest";
 
 import { LearningPlatformClient } from "~";
 
-const googleCookie = process.env.GOOGLE_COOKIE!;
+const accessToken = process.env.LEARNING_PLATFORM_ACCESS_TOKEN!;
+const googleAccessToken = process.env.GOOGLE_ACCESS_TOKEN!;
 
-if (!process.env.GOOGLE_COOKIE) {
-    throw new Error("Env: GOOGLE_COOKIE not found. Please provide this value in .env.testing");
+if (!accessToken) {
+    throw new Error("Env: LEARNING_PLATFORM_ACCESS_TOKEN not found. Please provide this value in .env.testing");
+}
+if (!googleAccessToken) {
+    console.warn("Env: GOOGLE_ACCESS_TOKEN not found. Provide this value in .env.testing to test the LearningPlatformClient.fromGoogleAccessToken method.");
 }
 
 describe("LearningPlatformClient (e2e)", () => {
 
-    it("authenticates", async () => {
+    it("authenticates with fromAccessToken", async () => {
 
-        const learningPlatform = await LearningPlatformClient.fromGoogleCookie(
-            googleCookie
+        const learningPlatform = await LearningPlatformClient.fromAccessToken(
+            accessToken
           );
           const settings = await learningPlatform.getOwnSettings();
 
           expect(settings).toHaveProperty('mySettings');
           expect(settings.mySettings).toHaveProperty('id');
     });
+    if (googleAccessToken) {
+        it("authenticates with fromGoogleAccessToken", async () => {
+
+            const learningPlatform = await LearningPlatformClient.fromGoogleAccessToken(
+                googleAccessToken,
+            );
+            const settings = await learningPlatform.getOwnSettings();
+
+            expect(settings).toHaveProperty('mySettings');
+            expect(settings.mySettings).toHaveProperty('id');
+        });
+    }
     it("getEventGroups method", async () => {
 
-        const learningPlatform = await LearningPlatformClient.fromGoogleCookie(
-            googleCookie
+        const learningPlatform = await LearningPlatformClient.fromAccessToken(
+            accessToken
           );
           const eventGroups = await learningPlatform.getEventGroups();
 
           expect(eventGroups).toHaveProperty('eventGroups');
-
-          console.log(eventGroups.eventGroups)
     });
 
     it("getUpcomingEvents method", async () => {
 
-        const learningPlatform = await LearningPlatformClient.fromGoogleCookie(
-            googleCookie
+        const learningPlatform = await LearningPlatformClient.fromAccessToken(
+            accessToken
           );
           const upcomingEvents = await learningPlatform.getUpcomingEvents();
 
           expect(upcomingEvents).toHaveProperty('upcomingEvents');
-
-          console.log(upcomingEvents.upcomingEvents)
     });
 });
