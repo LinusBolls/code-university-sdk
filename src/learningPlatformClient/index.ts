@@ -126,6 +126,14 @@ export class LearningPlatformClient {
       try {
         return await func(...args);
       } catch (err) {
+        const isIrrelevantWarning = err.message.includes(
+          'GraphQL operations must contain a non-empty `query` or a `persistedQuery` extension.'
+        );
+
+        if (isIrrelevantWarning) {
+          return;
+        }
+
         const isInvalidToken = err.message.includes(
           "Auth: The Authorization token you provided is invalid/expired. You'll need to use a different one."
         );
