@@ -38,8 +38,8 @@ export async function getOwnSettings(config: RequestConfig) {
 export async function getEventGroups(config: RequestConfig, offset = 0) {
   // full query: eventGroups(type: ACADEMIC, pagination: { limit: 20, offset: 20 }, filter: {}, organizing: false, attending: false)
   const query = config.gql`
-  query {
-    eventGroups(pagination: { offset: ${offset} }) {
+  query GetEventGroups($offset: Int!) {
+    eventGroups(pagination: { offset: $offset }) {
       title
       type
       nextEvent {
@@ -47,8 +47,10 @@ export async function getEventGroups(config: RequestConfig, offset = 0) {
       }
     }
   }`;
-  const res =
-    await config.graphqlClient.request<QueryRes<'eventGroups'>>(query);
+  const res = await config.graphqlClient.request<QueryRes<'eventGroups'>>(
+    query,
+    { offset }
+  );
 
   return res;
 }
@@ -127,5 +129,79 @@ export async function getMyNotifications(config: RequestConfig) {
   const res =
     await config.graphqlClient.request<QueryRes<'myNotifications'>>(query);
 
+  return res;
+}
+
+export async function sendForgotPasswordEmail(
+  config: RequestConfig,
+  email: string
+) {
+  const query = config.gql`
+  mutation SendForgotPasswordEmail($email: String!) {
+    forgotPassword(email: $email)
+  }`;
+  const res = await config.graphqlClient.request<MutationRes<'forgotPassword'>>(
+    query,
+    { email }
+  );
+  return res;
+}
+
+export async function markNotificationAsRead(
+  config: RequestConfig,
+  id: string
+) {
+  const query = config.gql`
+  mutation markAsRead($id: ID!) {
+    markNotificationRead(id: $id) {
+      id
+      __typename
+    }
+  }`;
+  const res = await config.graphqlClient.request<
+    MutationRes<'markNotificationRead'>
+  >(query, { id });
+  return res;
+}
+
+/**
+ * only possible for users that actually have a password on their account (most users only have Google OAuth available).
+ */
+export async function setPassword(
+  config: RequestConfig,
+  newPassword: string,
+  accessToken: string
+) {
+  const query = config.gql`
+  mutation markAsRead($password: String!, $set: String!) {
+    setPassword(password: $password, set: $set) {
+      token
+    }
+  }`;
+  const res = await config.graphqlClient.request<MutationRes<'setPassword'>>(
+    query,
+    { password: newPassword, set: accessToken }
+  );
+  return res;
+}
+
+/**
+ * only possible for users that actually have a password on their account (most users only have Google OAuth available).
+ */
+export async function signIn(
+  config: RequestConfig,
+  email: string,
+  password: string
+) {
+  const query = config.gql`
+  mutation signin($email: String!, $password: String!) {
+    signin(email: $email, password: $password) {
+      token
+    }
+  }`;
+  const res = await config.graphqlClient.request<MutationRes<'signin'>>(query, {
+    email,
+    password,
+  });
   return res;
 }

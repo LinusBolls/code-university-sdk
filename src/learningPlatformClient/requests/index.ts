@@ -6,6 +6,10 @@ import {
   getOwnSettings,
   getUnderMaintanance,
   getUpcomingEvents,
+  markNotificationAsRead,
+  sendForgotPasswordEmail,
+  setPassword,
+  signIn,
 } from './general';
 
 export const LearningPlatformRequest = {
@@ -16,4 +20,8 @@ export const LearningPlatformRequest = {
   getUnderMaintanance,
   getMyUpcomingAssessments,
   getMyNotifications,
+  markNotificationAsRead,
+  sendForgotPasswordEmail,
+  setPassword,
+  signIn,
 };
