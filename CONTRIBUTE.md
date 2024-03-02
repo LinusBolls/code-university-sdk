@@ -23,3 +23,7 @@ Create a file named `.env.testing` with contents matching `.env.testing.example`
 ```bash
 npm run test
 ```
+
+### 4. Updating the Learning Platform graphql types
+
+If the Learning Platform has undergone a schema change, simply run `npm run graphql:update-learning-platform-types`, and the two tools we use for code generation will automatically update the contents of the `src/graphql` directory.

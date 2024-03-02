@@ -26,6 +26,7 @@
     "prepublishOnly": "npm run format && npm run build",
     "graphql:get-schema": "npx get-graphql-schema https://api.app.code.berlin/graphql > src/graphql/schema.graphql",
     "graphql:codegen": "npx graphql-codegen --config graphql-codegen.config.ts",
+    "graphql:update-learning-platform-types": "npm run graphql:get-schema && npm run graphql:codegen && npm run format",
     "test": "vitest",
     "coverage": "vitest run --coverage"
   },
