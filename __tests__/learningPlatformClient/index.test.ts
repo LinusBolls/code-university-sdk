@@ -24,6 +24,7 @@ describe("LearningPlatformClient (e2e)", () => {
           expect(settings).toHaveProperty('mySettings');
           expect(settings.mySettings).toHaveProperty('id');
     });
+    
     if (googleAccessToken) {
         it("authenticates with fromGoogleAccessToken", async () => {
 
@@ -36,6 +37,17 @@ describe("LearningPlatformClient (e2e)", () => {
             expect(settings.mySettings).toHaveProperty('id');
         });
     }
+
+    it("getUnderMaintanance method", async () => {
+
+        const learningPlatform = await LearningPlatformClient.fromAccessToken(
+            accessToken
+          );
+          const underMaintanance = await learningPlatform.getUnderMaintanance();
+
+          expect(underMaintanance).toHaveProperty('underMaintanance');
+    });
+
     it("getEventGroups method", async () => {
 
         const learningPlatform = await LearningPlatformClient.fromAccessToken(
@@ -54,5 +66,25 @@ describe("LearningPlatformClient (e2e)", () => {
           const upcomingEvents = await learningPlatform.getUpcomingEvents();
 
           expect(upcomingEvents).toHaveProperty('upcomingEvents');
+    });
+
+    it("getMyUpcomingAssessments method", async () => {
+
+        const learningPlatform = await LearningPlatformClient.fromAccessToken(
+            accessToken
+          );
+          const myUpcomingAssessments = await learningPlatform.getMyUpcomingAssessments();
+
+          expect(myUpcomingAssessments).toHaveProperty('myUpcomingAssessments');
+    });
+
+    it("getMyNotifications method", async () => {
+
+        const learningPlatform = await LearningPlatformClient.fromAccessToken(
+            accessToken
+          );
+          const myNotifications = await learningPlatform.getMyNotifications();
+
+          expect(myNotifications).toHaveProperty('myNotifications');
     });
 });
