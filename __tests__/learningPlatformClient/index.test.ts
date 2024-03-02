@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { LearningPlatformClient } from "~";
+import { LearningPlatformClient } from "../../src";
 
 const accessToken = process.env.LEARNING_PLATFORM_ACCESS_TOKEN!;
 const googleAccessToken = process.env.GOOGLE_ACCESS_TOKEN!;

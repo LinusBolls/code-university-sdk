@@ -20,6 +20,8 @@ export interface LearningPlatformClientOptions {
   graphqlBaseUrl?: string;
   /** defaults to https://api.app.code.berlin */
   baseUrl?: string;
+
+  fetch?: RequestConfig['fetch'];
 }
 
 /**
@@ -34,10 +36,16 @@ export interface LearningPlatformClientOptions {
 export class LearningPlatformClient {
   private graphqlClient: GraphQLClient;
 
-  private accessToken: string | null;
+  private _accessToken: string | null;
+
+  public get accessToken() {
+    return this._accessToken;
+  }
 
   public readonly graphqlBaseUrl: string;
   public readonly baseUrl: string;
+
+  private readonly fetch: RequestConfig['fetch'];
 
   private constructor(
     accessToken: string | null,
@@ -45,11 +53,13 @@ export class LearningPlatformClient {
   ) {
     this.graphqlBaseUrl = options?.graphqlBaseUrl || config.graphqlBaseUrl;
     this.baseUrl = options?.baseUrl || config.baseUrl;
+    this.fetch = options?.fetch || fetch;
 
-    this.accessToken = accessToken;
+    this._accessToken = accessToken;
 
     this.graphqlClient = new GraphQLClient(this.graphqlBaseUrl, {
-      headers: getAuthHeaders(this.accessToken),
+      headers: getAuthHeaders(this._accessToken),
+      fetch: this.fetch,
     });
 
     for (const [key, func] of Object.entries(LearningPlatformRequest)) {
@@ -63,7 +73,9 @@ export class LearningPlatformClient {
   public get requestConfig(): RequestConfig {
     return {
       gql,
+      fetch: this.fetch,
       graphqlClient: this.graphqlClient,
+      accessToken: this._accessToken,
     };
   }
 
@@ -111,6 +123,7 @@ export class LearningPlatformClient {
     assertGoogleAccessToken(googleAccessToken);
 
     const data = await getLearningPlatformAccessToken(
+      options?.fetch || fetch,
       options?.graphqlBaseUrl || config.graphqlBaseUrl,
       googleAccessToken
     );
@@ -154,8 +167,9 @@ export class LearningPlatformClient {
   }
   private async refreshAccessToken() {
     const data = await getRefreshedLearningPlatformAccessToken(
+      this.fetch,
       this.baseUrl,
-      this.accessToken
+      this._accessToken
     );
 
     if (!data.ok)
@@ -163,9 +177,9 @@ export class LearningPlatformClient {
         `CodeUniversity.LearningPlatformClient.refreshAccessToken: Failed to refresh access token. (response: ${JSON.stringify(data)})`
       );
 
-    this.accessToken = data.token;
+    this._accessToken = data.token;
 
-    this.graphqlClient.setHeaders(getAuthHeaders(this.accessToken));
+    this.graphqlClient.setHeaders(getAuthHeaders(this._accessToken));
 
     return data.token;
   }

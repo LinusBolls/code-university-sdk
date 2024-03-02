@@ -1,3 +1,5 @@
+import { RequestConfig } from './requestConfig';
+
 /**
  * the headers required to authenticate with the CODE Learning Platform.
  */
@@ -23,6 +25,7 @@ export interface GetLearningPlatformAccessTokenResponse {
  * @param googleAccessToken a jwt issued by google to the learning platform
  */
 export async function getLearningPlatformAccessToken(
+  fetchImpl: RequestConfig['fetch'],
   graphqlBaseUrl: string,
   googleAccessToken: string
 ) {
@@ -31,7 +34,14 @@ export async function getLearningPlatformAccessToken(
     headers: {
       'content-type': 'application/json',
     },
-    body: `{"operationName":"googleSignin","variables":{"code":"${googleAccessToken}"},"query":"mutation googleSignin($code: String!) {\\n  googleSignin(code: $code) {\\n    token\\n    __typename\\n  }\\n}"}`,
+    body: JSON.stringify({
+      operationName: 'googleSignin',
+      variables: {
+        code: googleAccessToken,
+      },
+      query:
+        'mutation googleSignin($code: String!) {\n  googleSignin(code: $code) {\n    token\n    __typename\n  }\n}',
+    }),
   });
   const data: GetLearningPlatformAccessTokenResponse = await res.json();
 
@@ -57,10 +67,11 @@ export interface RefreshLearningPlatformAccessTokenResponse {
  * returns an access token required to authenticate with the CODE Learning Platform.
  */
 export async function getRefreshedLearningPlatformAccessToken(
+  fetchImpl: RequestConfig['fetch'],
   baseUrl: string,
   oldAccessToken: string
 ): Promise<RefreshLearningPlatformAccessTokenResponse> {
-  const res = await fetch(baseUrl + '/cid_refresh', {
+  const res = await fetchImpl(baseUrl + '/cid_refresh', {
     method: 'POST',
     headers: getAuthHeaders(oldAccessToken),
   });
