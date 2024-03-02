@@ -1,8 +1,12 @@
-import { Query } from '../../graphql/graphql';
+import { Mutation, Query } from '../../graphql/graphql';
 import { RequestConfig } from '../requestConfig';
 
-type QueryRes<Key extends keyof Query> = {
+export type QueryRes<Key extends keyof Query> = {
   [P in Key]: Query[P];
+};
+
+export type MutationRes<Key extends keyof Mutation> = {
+  [P in Key]: Mutation[P];
 };
 
 export async function getAllEvents(config: RequestConfig) {

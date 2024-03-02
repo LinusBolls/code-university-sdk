@@ -12,6 +12,8 @@ import {
 } from './jwt';
 import { LearningPlatformRequest } from './requests';
 import { LearningPlatformQueryExecutor } from './learningPlatformQueryExecutor';
+import { MutationRes, QueryRes } from './requests/general';
+import { Mutation, Query } from '../graphql/graphql';
 
 export interface LearningPlatformClientOptions {
   /** defaults to https://api.app.code.berlin/graphql */
@@ -27,7 +29,7 @@ export interface LearningPlatformClientOptions {
  *
  * (2) provides typed methods for some of the most common queries
  *
- * (3) allows for custom queries using `LearningPlatformClient.makeRawQuery`. check out the [learning platform graphql schema](https://github.com/LinusBolls/code-university-sdk/blob/main/src/graphql/schema.graphql) for more info`
+ * (3) allows for custom queries using the `.raw.query` and `.raw.mutation` methods. check out the [learning platform graphql schema](https://github.com/LinusBolls/code-university-sdk/blob/main/src/graphql/schema.graphql) for starting off points
  */
 export class LearningPlatformClient {
   private graphqlClient: GraphQLClient;
@@ -65,14 +67,30 @@ export class LearningPlatformClient {
     };
   }
 
-  /**
-   * we aim to support the most common queries with typed methods, but if you have a niche use case that we don't yet "officially" support, you can use this method to manually construct a graphql query or mutation.
-   *
-   * check out the [learning platform graphql schema](https://github.com/LinusBolls/code-university-sdk/blob/main/src/graphql/schema.graphql), and search for `type Query {` for starting off points.
-   */
-  public makeRawQuery = this.handleError((query: string) =>
-    this.graphqlClient.request(query)
-  );
+  public readonly raw = {
+    /**
+     * we aim to support the most common queries with typed methods, but if you have a niche use case that we don't yet "officially" support, you can use this method to manually construct a graphql query.
+     *
+     * check out the [learning platform graphql schema](https://github.com/LinusBolls/code-university-sdk/blob/main/src/graphql/schema.graphql), and search for `type Query {` for starting off points.
+     */
+    query: this.handleError(
+      <Key extends keyof Query>(query: string | TemplateStringsArray) =>
+        this.graphqlClient.request<QueryRes<Key>>(
+          typeof query === 'string' ? query : query.join('')
+        )
+    ),
+    /**
+     * we aim to support the most common mutations with typed methods, but if you have a niche use case that we don't yet "officially" support, you can use this method to manually construct a graphql mutation.
+     *
+     * check out the [learning platform graphql schema](https://github.com/LinusBolls/code-university-sdk/blob/main/src/graphql/schema.graphql), and search for `type Mutation {` for starting off points.
+     */
+    mutation: this.handleError(
+      <Key extends keyof Mutation>(mutation: string | TemplateStringsArray) =>
+        this.graphqlClient.request<MutationRes<Key>>(
+          typeof mutation === 'string' ? mutation : mutation.join('')
+        )
+    ),
+  };
 
   static async fromAccessToken(
     accessToken: string,

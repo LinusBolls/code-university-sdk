@@ -87,4 +87,32 @@ describe("LearningPlatformClient (e2e)", () => {
 
           expect(myNotifications).toHaveProperty('myNotifications');
     });
+    it("makes raw queries", async () => {
+
+        const learningPlatform = await LearningPlatformClient.fromAccessToken(
+            accessToken
+          );
+
+        const myNotifications = await learningPlatform.raw.query<'myNotifications'>`
+        query {
+          myNotifications {
+            title
+            label
+            link
+            read
+            urgency
+            createdAt
+          }
+        }`;
+        // make sure the return type gets inferred correctly
+        myNotifications satisfies { myNotifications: { title: string }[] };
+
+        // @ts-expect-error assert non-existant property "foo" get flagged by the linter
+        myNotifications satisfies { myNotifications: { foo: string }[] };
+
+        // @ts-expect-error assert non-existant query "foo" get flagged by the linter
+        learningPlatform.raw.query<'foo'>('');
+
+        expect(myNotifications).toHaveProperty('myNotifications');
+    });
 });
