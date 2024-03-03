@@ -113,7 +113,7 @@ export class LearningPlatformClient {
     return new LearningPlatformClient(
       accessToken,
       options
-    ) as unknown as LearningPlatformClient & LearningPlatformQueryExecutor;
+    ) as unknown as LearningPlatformClientType;
   }
 
   static async fromGoogleAccessToken(
@@ -184,3 +184,6 @@ export class LearningPlatformClient {
     return data.token;
   }
 }
+
+export type LearningPlatformClientType = LearningPlatformClient &
+  LearningPlatformQueryExecutor;
