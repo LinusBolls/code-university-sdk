@@ -1,118 +1,100 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from 'vitest';
 
-import { LearningPlatformClient } from "../../src";
+import { LearningPlatformClient, LearningPlatformClientType } from '../../src';
 
 const accessToken = process.env.LEARNING_PLATFORM_ACCESS_TOKEN!;
 const googleAccessToken = process.env.GOOGLE_ACCESS_TOKEN!;
 
 if (!accessToken) {
-    throw new Error("Env: LEARNING_PLATFORM_ACCESS_TOKEN not found. Please provide this value in .env.testing");
+  throw new Error(
+    'Env: LEARNING_PLATFORM_ACCESS_TOKEN not found. Please provide this value in .env.testing'
+  );
 }
 if (!googleAccessToken) {
-    console.warn("Env: GOOGLE_ACCESS_TOKEN not found. Provide this value in .env.testing to test the LearningPlatformClient.fromGoogleAccessToken method.");
+  console.warn(
+    'Env: GOOGLE_ACCESS_TOKEN not found. Provide this value in .env.testing to test the LearningPlatformClient.fromGoogleAccessToken method.'
+  );
 }
 
-describe("LearningPlatformClient (e2e)", () => {
+describe('LearningPlatformClient (e2e)', () => {
+  let learningPlatform: LearningPlatformClientType;
 
-    it("authenticates with fromAccessToken", async () => {
+  beforeAll(async () => {
+    learningPlatform =
+      await LearningPlatformClient.fromAccessToken(accessToken);
+  });
 
-        const learningPlatform = await LearningPlatformClient.fromAccessToken(
-            accessToken
-          );
-          const settings = await learningPlatform.getOwnSettings();
+  it('authenticates with fromAccessToken', async () => {
+    const newLearningPlatform =
+      await LearningPlatformClient.fromAccessToken(accessToken);
+    const settings = await newLearningPlatform.getOwnSettings();
 
-          expect(settings).toHaveProperty('mySettings');
-          expect(settings.mySettings).toHaveProperty('id');
+    expect(settings).toHaveProperty('mySettings');
+    expect(settings.mySettings).toHaveProperty('id');
+  });
+
+  if (googleAccessToken) {
+    it('authenticates with fromGoogleAccessToken', async () => {
+      const newLearningPlatform =
+        await LearningPlatformClient.fromGoogleAccessToken(googleAccessToken);
+      const settings = await newLearningPlatform.getOwnSettings();
+
+      expect(settings).toHaveProperty('mySettings');
+      expect(settings.mySettings).toHaveProperty('id');
     });
-    
-    if (googleAccessToken) {
-        it("authenticates with fromGoogleAccessToken", async () => {
+  }
 
-            const learningPlatform = await LearningPlatformClient.fromGoogleAccessToken(
-                googleAccessToken,
-            );
-            const settings = await learningPlatform.getOwnSettings();
+  it('getUnderMaintanance method', async () => {
+    const underMaintanance = await learningPlatform.getUnderMaintanance();
 
-            expect(settings).toHaveProperty('mySettings');
-            expect(settings.mySettings).toHaveProperty('id');
-        });
-    }
+    expect(underMaintanance).toHaveProperty('underMaintanance');
+  });
 
-    it("getUnderMaintanance method", async () => {
+  it('getEventGroups method', async () => {
+    const eventGroups = await learningPlatform.getEventGroups();
 
-        const learningPlatform = await LearningPlatformClient.fromAccessToken(
-            accessToken
-          );
-          const underMaintanance = await learningPlatform.getUnderMaintanance();
+    expect(eventGroups).toHaveProperty('eventGroups');
+  });
 
-          expect(underMaintanance).toHaveProperty('underMaintanance');
-    });
+  it('getUpcomingEvents method', async () => {
+    const upcomingEvents = await learningPlatform.getUpcomingEvents();
 
-    it("getEventGroups method", async () => {
+    expect(upcomingEvents).toHaveProperty('upcomingEvents');
+  });
 
-        const learningPlatform = await LearningPlatformClient.fromAccessToken(
-            accessToken
-          );
-          const eventGroups = await learningPlatform.getEventGroups();
+  it('getMyUpcomingAssessments method', async () => {
+    const myUpcomingAssessments =
+      await learningPlatform.getMyUpcomingAssessments();
 
-          expect(eventGroups).toHaveProperty('eventGroups');
-    });
+    expect(myUpcomingAssessments).toHaveProperty('myUpcomingAssessments');
+  });
 
-    it("getUpcomingEvents method", async () => {
+  it('getMyNotifications method', async () => {
+    const myNotifications = await learningPlatform.getMyNotifications();
 
-        const learningPlatform = await LearningPlatformClient.fromAccessToken(
-            accessToken
-          );
-          const upcomingEvents = await learningPlatform.getUpcomingEvents();
+    expect(myNotifications).toHaveProperty('myNotifications');
+  });
+  it('makes raw queries', async () => {
+    const myNotifications = await learningPlatform.raw.query<'myNotifications'>`
+    query {
+        myNotifications {
+        title
+        label
+        link
+        read
+        urgency
+        createdAt
+        }
+    }`;
+    // make sure the return type gets inferred correctly
+    myNotifications satisfies { myNotifications: { title: string }[] };
 
-          expect(upcomingEvents).toHaveProperty('upcomingEvents');
-    });
+    // @ts-expect-error assert non-existant property "foo" get flagged by the linter
+    myNotifications satisfies { myNotifications: { foo: string }[] };
 
-    it("getMyUpcomingAssessments method", async () => {
+    // @ts-expect-error assert non-existant query "foo" get flagged by the linter
+    learningPlatform.raw.query<'foo'>('');
 
-        const learningPlatform = await LearningPlatformClient.fromAccessToken(
-            accessToken
-          );
-          const myUpcomingAssessments = await learningPlatform.getMyUpcomingAssessments();
-
-          expect(myUpcomingAssessments).toHaveProperty('myUpcomingAssessments');
-    });
-
-    it("getMyNotifications method", async () => {
-
-        const learningPlatform = await LearningPlatformClient.fromAccessToken(
-            accessToken
-          );
-          const myNotifications = await learningPlatform.getMyNotifications();
-
-          expect(myNotifications).toHaveProperty('myNotifications');
-    });
-    it("makes raw queries", async () => {
-
-        const learningPlatform = await LearningPlatformClient.fromAccessToken(
-            accessToken
-          );
-
-        const myNotifications = await learningPlatform.raw.query<'myNotifications'>`
-        query {
-          myNotifications {
-            title
-            label
-            link
-            read
-            urgency
-            createdAt
-          }
-        }`;
-        // make sure the return type gets inferred correctly
-        myNotifications satisfies { myNotifications: { title: string }[] };
-
-        // @ts-expect-error assert non-existant property "foo" get flagged by the linter
-        myNotifications satisfies { myNotifications: { foo: string }[] };
-
-        // @ts-expect-error assert non-existant query "foo" get flagged by the linter
-        learningPlatform.raw.query<'foo'>('');
-
-        expect(myNotifications).toHaveProperty('myNotifications');
-    });
+    expect(myNotifications).toHaveProperty('myNotifications');
+  });
 });
