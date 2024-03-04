@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { LearningPlatformRequest } from './requests';
 
 type Tail<T extends any[]> = ((...args: T) => any) extends (

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { assertLearningPlatformAccessToken } from '../../../src/learningPlatformClient/jwt';
 import { MockLPAccessToken } from '../../util/jwt';

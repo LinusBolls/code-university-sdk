@@ -1,8 +1,8 @@
-import { describe, it, expect, vitest } from 'vitest';
+import { describe, expect, it, vitest } from 'vitest';
 
 import { LearningPlatformClient } from '../../../src';
-import { MockLPAccessToken } from '../../util/jwt';
 import { mockFetch } from '../../util/fetch';
+import { MockLPAccessToken } from '../../util/jwt';
 
 describe('LearningPlatformClient (integration)', () => {
   it("automatically refreshes the token it was initialized with if it's expired", async () => {
