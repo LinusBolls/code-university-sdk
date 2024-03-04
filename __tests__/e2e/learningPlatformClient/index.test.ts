@@ -14,6 +14,7 @@ if (!accessToken) {
   );
 }
 if (!googleAccessToken) {
+  /* eslint-disable-next-line no-console */
   console.warn(
     'Env: GOOGLE_ACCESS_TOKEN not found. Provide this value in .env.testing to test the LearningPlatformClient.fromGoogleAccessToken method.'
   );

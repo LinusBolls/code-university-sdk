@@ -7,6 +7,7 @@ const parseJwt = <Payload>(token: string): Payload | null => {
     if (parts.length !== 3) {
       return null;
     }
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     const [header, payload, signature] = parts;
 
     const decodedPayload = base64decode(payload);
