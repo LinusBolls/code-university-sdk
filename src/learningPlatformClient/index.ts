@@ -1,8 +1,7 @@
 import { GraphQLClient, gql } from 'graphql-request';
-import { RequestConfig } from './requestConfig';
+import { RequestConfig, getUnauthedRequestConfig } from './requestConfig';
 import {
   getAuthHeaders,
-  getLearningPlatformAccessToken,
   getRefreshedLearningPlatformAccessToken,
 } from './auth';
 import { config } from '../config';
@@ -12,7 +11,12 @@ import {
 } from './jwt';
 import { LearningPlatformRequest } from './requests';
 import { LearningPlatformQueryExecutor } from './learningPlatformQueryExecutor';
-import { MutationRes, QueryRes } from './requests/general';
+import {
+  MutationRes,
+  QueryRes,
+  getLearningPlatformAccessToken,
+  signIn,
+} from './requests/general';
 import { Mutation, Query } from '../graphql/graphql';
 
 export interface LearningPlatformClientOptions {
@@ -63,9 +67,11 @@ export class LearningPlatformClient {
     });
 
     for (const [key, func] of Object.entries(LearningPlatformRequest)) {
-      this[key] = this.handleError((...args) =>
-        // @ts-expect-error this is impossible to type lol
-        func(this.requestConfig, ...args)
+      this[key] = this.handleError(
+        (...args) =>
+          // @ts-expect-error this is impossible to type lol
+          func(this.requestConfig, ...args),
+        key
       );
     }
   }
@@ -89,7 +95,8 @@ export class LearningPlatformClient {
       <Key extends keyof Query>(query: string | TemplateStringsArray) =>
         this.graphqlClient.request<QueryRes<Key>>(
           typeof query === 'string' ? query : query.join('')
-        )
+        ),
+      'raw.query'
     ),
     /**
      * we aim to support the most common mutations with typed methods, but if you have a niche use case that we don't yet "officially" support, you can use this method to manually construct a graphql mutation.
@@ -100,7 +107,8 @@ export class LearningPlatformClient {
       <Key extends keyof Mutation>(mutation: string | TemplateStringsArray) =>
         this.graphqlClient.request<MutationRes<Key>>(
           typeof mutation === 'string' ? mutation : mutation.join('')
-        )
+        ),
+      'raw.mutation'
     ),
   };
 
@@ -110,8 +118,10 @@ export class LearningPlatformClient {
   ) {
     assertLearningPlatformAccessToken(accessToken);
 
+    const freshToken = await useOrGetNewTokenIfExpired(accessToken, options);
+
     return new LearningPlatformClient(
-      accessToken,
+      freshToken,
       options
     ) as unknown as LearningPlatformClientType;
   }
@@ -123,20 +133,39 @@ export class LearningPlatformClient {
     assertGoogleAccessToken(googleAccessToken);
 
     const data = await getLearningPlatformAccessToken(
-      options?.fetch || fetch,
-      options?.graphqlBaseUrl || config.graphqlBaseUrl,
+      getUnauthedRequestConfig(options),
       googleAccessToken
     );
-    const accessToken = data.data.googleSignin.token;
+    const accessToken = data.googleSignin.token;
+
+    return LearningPlatformClient.fromAccessToken(accessToken, options);
+  }
+
+  static async fromCredentials(
+    email: string,
+    password: string,
+    options?: LearningPlatformClientOptions
+  ) {
+    const data = await signIn(
+      getUnauthedRequestConfig(options),
+      email,
+      password
+    );
+    const accessToken = data.signin.token;
 
     return LearningPlatformClient.fromAccessToken(accessToken, options);
   }
 
   private handleError<Args extends unknown[], Return>(
-    func: (...args: Args) => Return
+    func: (...args: Args) => Return,
+    queryName: string
   ): (...args: Args) => Return {
     return async function (...args: Args): Promise<Return> {
       try {
+        this._accessToken = await useOrGetNewTokenIfExpired(this._accessToken, {
+          fetch: this.fetch,
+          baseUrl: this.baseUrl,
+        });
         return await func(...args);
       } catch (err) {
         const isIrrelevantWarning = err.message.includes(
@@ -156,12 +185,15 @@ export class LearningPlatformClient {
 
           try {
             return await func(...args);
-          } catch (err2) {
-            console.error('something went really wrong:', err2.message);
+          } catch (secondErr) {
+            throw new Error(
+              `CodeUniversity.LearningPlatformClient.${queryName}: Unknown error. (original error: ${secondErr.message})`
+            );
           }
-        } else {
-          throw err;
         }
+        throw new Error(
+          `CodeUniversity.LearningPlatformClient.${queryName}: Unknown error. (original error: ${err.message})`
+        );
       }
     }.bind(this);
   }
@@ -172,7 +204,7 @@ export class LearningPlatformClient {
       this._accessToken
     );
 
-    if (!data.ok)
+    if (!data.ok || !data.token)
       throw new Error(
         `CodeUniversity.LearningPlatformClient.refreshAccessToken: Failed to refresh access token. (response: ${JSON.stringify(data)})`
       );
@@ -187,3 +219,21 @@ export class LearningPlatformClient {
 
 export type LearningPlatformClientType = LearningPlatformClient &
   LearningPlatformQueryExecutor;
+
+async function useOrGetNewTokenIfExpired(
+  accessToken: string,
+  options?: LearningPlatformClientOptions
+) {
+  const payload = assertLearningPlatformAccessToken(accessToken);
+
+  const isExpired = payload.exp < Date.now() / 1000;
+
+  if (!isExpired) return accessToken;
+
+  const res = await getRefreshedLearningPlatformAccessToken(
+    options?.fetch || fetch,
+    options?.baseUrl || config.baseUrl,
+    accessToken
+  );
+  return res.token;
+}

@@ -205,3 +205,28 @@ export async function signIn(
   });
   return res;
 }
+
+/**
+ * returns an access token required to authenticate with the CODE Learning Platform.
+ *
+ * @param googleAccessToken a jwt issued by google to the learning platform
+ */
+export async function getLearningPlatformAccessToken(
+  config: RequestConfig,
+  googleAccessToken: string
+) {
+  const query = config.gql`
+  mutation googleSignin($code: String!) {
+    googleSignin(code: $code) {
+      token
+      __typename
+    }
+  }`;
+  const res = await config.graphqlClient.request<MutationRes<'googleSignin'>>(
+    query,
+    {
+      code: googleAccessToken,
+    }
+  );
+  return res;
+}
