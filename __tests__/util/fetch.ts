@@ -1,5 +1,19 @@
 import { MockLPAccessToken } from './jwt';
 
+const majorNodeVersion = parseInt(
+  process.version.match(/^v(\d+).\d+.\d+$/)?.[1] || 'NaN'
+);
+
+if (typeof fetch === 'undefined' || typeof Headers === 'undefined') {
+  if (majorNodeVersion <= 16) {
+    throw new Error(
+      `global fetch is not defined, but required for e2e tests. please upgrade to nodejs version v18.0.0 or newer, where fetch is natively supported. your current version is ${process.version}.`
+    );
+  } else {
+    throw new Error('global fetch is not defined, but required for e2e tests.');
+  }
+}
+
 const createFetchJsonResponse = (data: unknown) => {
   return {
     text: () => new Promise((res) => res(JSON.stringify(data))),
