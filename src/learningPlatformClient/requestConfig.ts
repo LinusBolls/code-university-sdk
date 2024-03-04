@@ -23,6 +23,7 @@ export const getUnauthedRequestConfig = (
     }),
     gql,
     fetch: fetchImpl,
+    // @ts-expect-error todo: type this
     accessToken: null,
   };
 };

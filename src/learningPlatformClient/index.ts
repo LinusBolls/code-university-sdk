@@ -41,7 +41,7 @@ export interface LearningPlatformClientOptions {
 export class LearningPlatformClient {
   private graphqlClient: GraphQLClient;
 
-  private _accessToken: string | null;
+  private _accessToken: string;
 
   public get accessToken() {
     return this._accessToken;
@@ -53,7 +53,7 @@ export class LearningPlatformClient {
   private readonly fetch: RequestConfig['fetch'];
 
   private constructor(
-    accessToken: string | null,
+    accessToken: string,
     options?: LearningPlatformClientOptions
   ) {
     this.graphqlBaseUrl = options?.graphqlBaseUrl || config.graphqlBaseUrl;
@@ -68,6 +68,7 @@ export class LearningPlatformClient {
     });
 
     for (const [key, func] of Object.entries(LearningPlatformRequest)) {
+      // @ts-expect-error this is impossible to type lol
       this[key] = this.handleError(
         (...args) =>
           // @ts-expect-error this is impossible to type lol
@@ -137,7 +138,7 @@ export class LearningPlatformClient {
       getUnauthedRequestConfig(options),
       googleAccessToken
     );
-    const accessToken = data.googleSignin.token;
+    const accessToken = data.googleSignin!.token!;
 
     return LearningPlatformClient.fromAccessToken(accessToken, options);
   }
@@ -152,16 +153,20 @@ export class LearningPlatformClient {
       email,
       password
     );
-    const accessToken = data.signin.token;
+    const accessToken = data.signin!.token!;
 
     return LearningPlatformClient.fromAccessToken(accessToken, options);
   }
 
-  private handleError<Args extends unknown[], Return>(
+  private handleError<Args extends unknown[], Return extends Promise<unknown>>(
     func: (...args: Args) => Return,
     queryName: string
   ): (...args: Args) => Return {
-    return async function (...args: Args): Promise<Return> {
+    return async function (
+      this: LearningPlatformClient,
+      ...args: Args
+      // @ts-expect-error haher
+    ): Return {
       try {
         this._accessToken = await useOrGetNewTokenIfExpired(this._accessToken, {
           fetch: this.fetch,
@@ -169,15 +174,16 @@ export class LearningPlatformClient {
         });
         return await func(...args);
       } catch (err) {
-        const isIrrelevantWarning = err.message.includes(
+        const isIrrelevantWarning = (err as Error).message?.includes(
           'GraphQL operations must contain a non-empty `query` or a `persistedQuery` extension.'
         );
 
         if (isIrrelevantWarning) {
+          // @ts-expect-error haher
           return;
         }
 
-        const isInvalidToken = err.message.includes(
+        const isInvalidToken = (err as Error).message?.includes(
           "Auth: The Authorization token you provided is invalid/expired. You'll need to use a different one."
         );
 
@@ -188,12 +194,12 @@ export class LearningPlatformClient {
             return await func(...args);
           } catch (secondErr) {
             throw new Error(
-              `CodeUniversity.LearningPlatformClient.${queryName}: Unknown error. (original error: ${secondErr.message})`
+              `CodeUniversity.LearningPlatformClient.${queryName}: Unknown error. (original error: ${(secondErr as Error).message})`
             );
           }
         }
         throw new Error(
-          `CodeUniversity.LearningPlatformClient.${queryName}: Unknown error. (original error: ${err.message})`
+          `CodeUniversity.LearningPlatformClient.${queryName}: Unknown error. (original error: ${(err as Error).message})`
         );
       }
     }.bind(this);
