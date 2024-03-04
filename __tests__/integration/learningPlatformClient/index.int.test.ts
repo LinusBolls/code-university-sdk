@@ -20,6 +20,10 @@ describe('LearningPlatformClient (integration)', () => {
       'https://api.app.code.berlin/cid_refresh',
       expect.objectContaining({
         method: 'POST',
+        headers: {
+          authorization: 'Bearer ' + MockLPAccessToken.expiredValid,
+          Cookie: 'cid=' + MockLPAccessToken.expiredValid,
+        },
       })
     );
     expect(fetchImpl).toHaveBeenNthCalledWith(
@@ -27,6 +31,11 @@ describe('LearningPlatformClient (integration)', () => {
       'https://api.app.code.berlin/graphql',
       expect.objectContaining({
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          authorization: 'Bearer ' + MockLPAccessToken.freshValid,
+          Cookie: 'cid=' + MockLPAccessToken.freshValid,
+        },
       })
     );
     expect(settings).toHaveProperty('mySettings');
