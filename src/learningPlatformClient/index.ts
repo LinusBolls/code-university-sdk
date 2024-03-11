@@ -90,9 +90,13 @@ export class LearningPlatformClient {
      * check out the [learning platform graphql schema](https://github.com/LinusBolls/code-university-sdk/blob/main/src/graphql/schema.graphql), and search for `type Query {` for starting off points.
      */
     query: this.handleError(
-      <Key extends keyof Query>(query: string | TemplateStringsArray) =>
+      <Key extends keyof Query>(
+        query: string | TemplateStringsArray,
+        variables?: Record<string, unknown>
+      ) =>
         this.graphqlClient.request<QueryRes<Key>>(
-          typeof query === 'string' ? query : query.join('')
+          typeof query === 'string' ? query : query.join(''),
+          variables
         ),
       'raw.query'
     ),
@@ -102,9 +106,13 @@ export class LearningPlatformClient {
      * check out the [learning platform graphql schema](https://github.com/LinusBolls/code-university-sdk/blob/main/src/graphql/schema.graphql), and search for `type Mutation {` for starting off points.
      */
     mutation: this.handleError(
-      <Key extends keyof Mutation>(mutation: string | TemplateStringsArray) =>
+      <Key extends keyof Mutation>(
+        mutation: string | TemplateStringsArray,
+        variables?: Record<string, unknown>
+      ) =>
         this.graphqlClient.request<MutationRes<Key>>(
-          typeof mutation === 'string' ? mutation : mutation.join('')
+          typeof mutation === 'string' ? mutation : mutation.join(''),
+          variables
         ),
       'raw.mutation'
     ),
