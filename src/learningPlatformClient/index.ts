@@ -2,6 +2,7 @@ import { gql, GraphQLClient } from 'graphql-request';
 
 import { config } from '../config';
 import { Mutation, Query } from '../graphql/graphql';
+import { MutationRes, QueryRes } from '../publicUtil';
 import {
   getAuthHeaders,
   getRefreshedLearningPlatformAccessToken,
@@ -13,12 +14,7 @@ import {
 import { LearningPlatformQueryExecutor } from './learningPlatformQueryExecutor';
 import { getUnauthedRequestConfig, RequestConfig } from './requestConfig';
 import { LearningPlatformRequest } from './requests';
-import {
-  getLearningPlatformAccessToken,
-  MutationRes,
-  QueryRes,
-  signIn,
-} from './requests/general';
+import { getLearningPlatformAccessToken, signIn } from './requests/general';
 
 export interface LearningPlatformClientOptions {
   /** defaults to https://api.app.code.berlin/graphql */
