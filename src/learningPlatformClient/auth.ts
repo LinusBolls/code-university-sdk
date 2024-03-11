@@ -27,5 +27,12 @@ export async function getRefreshedLearningPlatformAccessToken(
   });
   const data: RefreshLearningPlatformAccessTokenResponse = await res.json();
 
+  if (!data.ok || !data.token) {
+    throw new Error(
+      'CodeUniversity.getRefreshedLearningPlatformAccessToken: Failed to refresh access token. (response: ' +
+        JSON.stringify(data) +
+        ')'
+    );
+  }
   return data;
 }
