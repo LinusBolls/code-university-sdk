@@ -13,4 +13,6 @@ export const config = {
   googleAccessTokenAudience: learningPlatformGoogleClientId,
 
   learningPlatformGoogleClientId,
+
+  learningPlatformAccessTokenSoftExpirySeconds: 10 * 60,
 };

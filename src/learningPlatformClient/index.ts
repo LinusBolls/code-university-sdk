@@ -237,9 +237,14 @@ async function useOrGetNewTokenIfExpired(
 ) {
   const payload = assertLearningPlatformAccessToken(accessToken);
 
+  const softExp =
+    payload.iat + config.learningPlatformAccessTokenSoftExpirySeconds;
+
   const isExpired = payload.exp < Date.now() / 1000;
 
-  if (!isExpired) return accessToken;
+  const isSoftExpired = softExp < Date.now() / 1000;
+
+  if (!isExpired && !isSoftExpired) return accessToken;
 
   const res = await getRefreshedLearningPlatformAccessToken(
     options?.fetch || fetch,
