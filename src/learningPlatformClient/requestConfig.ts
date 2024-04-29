@@ -8,7 +8,8 @@ export interface RequestConfig {
   fetch: typeof fetch;
 
   graphqlClient: GraphQLClient;
-  accessToken: string;
+  refreshToken: string | null;
+  accessToken: string | null;
 }
 
 export const getUnauthedRequestConfig = (
@@ -23,7 +24,7 @@ export const getUnauthedRequestConfig = (
     }),
     gql,
     fetch: fetchImpl,
-    // @ts-expect-error todo: type this
+    refreshToken: null,
     accessToken: null,
   };
 };

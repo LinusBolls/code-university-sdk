@@ -1,19 +1,18 @@
 import { describe, expect, it, vitest } from 'vitest';
 
 import { LearningPlatformClient } from '../../../src';
+import { MockLPAccessToken } from '../../util/accessTokens';
 import { mockFetch } from '../../util/fetch';
-import { MockLPAccessToken } from '../../util/jwt';
+import { MockLPRefreshToken } from '../../util/refreshTokens';
 
 describe('LearningPlatformClient (integration)', () => {
-  it("automatically refreshes the token it was initialized with if it's expired", async () => {
+  it('fetches an access token', async () => {
     const fetchImpl = vitest.fn(mockFetch);
-
-    const newLearningPlatform = await LearningPlatformClient.fromAccessToken(
-      MockLPAccessToken.expiredValid,
+    const newLearningPlatform = await LearningPlatformClient.fromRefreshToken(
+      MockLPRefreshToken.freshValid,
       { fetch: fetchImpl }
     );
     const settings = await newLearningPlatform.getOwnSettings();
-
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(fetchImpl).toHaveBeenNthCalledWith(
       1,
@@ -21,8 +20,7 @@ describe('LearningPlatformClient (integration)', () => {
       expect.objectContaining({
         method: 'POST',
         headers: {
-          authorization: 'Bearer ' + MockLPAccessToken.expiredValid,
-          Cookie: 'cid=' + MockLPAccessToken.expiredValid,
+          Cookie: 'cid=' + MockLPRefreshToken.freshValid,
         },
       })
     );
@@ -34,29 +32,8 @@ describe('LearningPlatformClient (integration)', () => {
         headers: {
           'Content-Type': 'application/json',
           authorization: 'Bearer ' + MockLPAccessToken.freshValid,
-          Cookie: 'cid=' + MockLPAccessToken.freshValid,
+          Cookie: 'cid=' + MockLPRefreshToken.freshValid,
         },
-      })
-    );
-    expect(settings).toHaveProperty('mySettings');
-    expect(settings.mySettings).toHaveProperty('id');
-  });
-
-  it("doesn't refresh the token it was initialized with if it's not expired", async () => {
-    const fetchImpl = vitest.fn(mockFetch);
-
-    const newLearningPlatform = await LearningPlatformClient.fromAccessToken(
-      MockLPAccessToken.freshValid,
-      { fetch: fetchImpl }
-    );
-    const settings = await newLearningPlatform.getOwnSettings();
-
-    expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(fetchImpl).toHaveBeenNthCalledWith(
-      1,
-      'https://api.app.code.berlin/graphql',
-      expect.objectContaining({
-        method: 'POST',
       })
     );
     expect(settings).toHaveProperty('mySettings');

@@ -4,7 +4,7 @@ Functionality and data related to CODE University of Applied Sciences (https://c
 
 ## Tested with
 
-- [CODE Learning Platform](https://app.code.berlin) v2.13.3
+- [CODE Learning Platform](https://app.code.berlin) v2.14.5
 - NodeJs v20.5.1
 - NPM v9.8.0
 
@@ -23,8 +23,8 @@ npm install code-university
 import { LearningPlatformClient } from 'code-university';
 
 async function main() {
-  const learningPlatform = await LearningPlatformClient.fromAccessToken(
-    process.env.LEARNING_PLATFORM_ACCESS_TOKEN
+  const learningPlatform = await LearningPlatformClient.fromRefreshToken(
+    process.env.LEARNING_PLATFORM_REFRESH_TOKEN
   );
   const settings = await learningPlatform.getOwnSettings();
 
@@ -33,7 +33,7 @@ async function main() {
 main();
 ```
 
-## Retrieving an access token from the CODE Learning Platform
+## Retrieving a refresh token from the CODE Learning Platform
 
 1. Open https://app.code.berlin
 2. Open the browser devtools using `Cmd + Shift + I` on mac or `Ctrl + Shift + I` on windows

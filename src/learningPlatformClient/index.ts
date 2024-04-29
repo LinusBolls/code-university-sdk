@@ -3,18 +3,16 @@ import { gql, GraphQLClient } from 'graphql-request';
 import { config } from '../config';
 import { Mutation, Query } from '../graphql/graphql';
 import { MutationRes, QueryRes } from '../publicUtil';
-import {
-  getAuthHeaders,
-  getRefreshedLearningPlatformAccessToken,
-} from './auth';
+import { getAuthHeaders, getLearningPlatformAccessToken } from './auth';
 import {
   assertGoogleAccessToken,
   assertLearningPlatformAccessToken,
+  assertLearningPlatformRefreshToken,
 } from './jwt';
 import { LearningPlatformQueryExecutor } from './learningPlatformQueryExecutor';
 import { getUnauthedRequestConfig, RequestConfig } from './requestConfig';
 import { LearningPlatformRequest } from './requests';
-import { getLearningPlatformAccessToken, signIn } from './requests/general';
+import { getLearningPlatformRefreshToken, signIn } from './requests/general';
 
 export interface LearningPlatformClientOptions {
   /** defaults to https://api.app.code.berlin/graphql */
@@ -37,8 +35,12 @@ export interface LearningPlatformClientOptions {
 export class LearningPlatformClient {
   private graphqlClient: GraphQLClient;
 
-  private _accessToken: string;
+  private _refreshToken: string | null;
+  private _accessToken: string | null;
 
+  public get refreshToken() {
+    return this._refreshToken;
+  }
   public get accessToken() {
     return this._accessToken;
   }
@@ -49,17 +51,19 @@ export class LearningPlatformClient {
   private readonly fetch: RequestConfig['fetch'];
 
   private constructor(
-    accessToken: string,
+    refreshToken: string | null,
+    accessToken: string | null,
     options?: LearningPlatformClientOptions
   ) {
     this.graphqlBaseUrl = options?.graphqlBaseUrl || config.graphqlBaseUrl;
     this.baseUrl = options?.baseUrl || config.baseUrl;
     this.fetch = options?.fetch || fetch;
 
+    this._refreshToken = refreshToken;
     this._accessToken = accessToken;
 
     this.graphqlClient = new GraphQLClient(this.graphqlBaseUrl, {
-      headers: getAuthHeaders(this._accessToken),
+      headers: getAuthHeaders(this._refreshToken, this._accessToken),
       fetch: this.fetch,
     });
 
@@ -79,6 +83,7 @@ export class LearningPlatformClient {
       gql,
       fetch: this.fetch,
       graphqlClient: this.graphqlClient,
+      refreshToken: this._refreshToken,
       accessToken: this._accessToken,
     };
   }
@@ -118,33 +123,64 @@ export class LearningPlatformClient {
     ),
   };
 
+  /**
+   * the main way to initialize the class.
+   *
+   * the refresh token is the value of your `cid` cookie on the Learning Platform.
+   *
+   * @see https://github.com/linusBolls/code-university-sdk/?tab=readme-ov-file#retrieving-a-refresh-token-from-the-code-learning-platform
+   */
+  static async fromRefreshToken(
+    refreshToken: string,
+    options?: LearningPlatformClientOptions
+  ) {
+    assertLearningPlatformRefreshToken(refreshToken);
+
+    const accessToken = await useOrGetNewTokenIfExpired(
+      refreshToken,
+      null,
+      options
+    );
+
+    return new LearningPlatformClient(
+      refreshToken,
+      accessToken,
+      options
+    ) as unknown as LearningPlatformClientType;
+  }
+
+  /**
+   * i don't know why you'd use this, since the client would only be valid for the duration of the access token, which is < 10mins.
+   */
   static async fromAccessToken(
     accessToken: string,
     options?: LearningPlatformClientOptions
   ) {
     assertLearningPlatformAccessToken(accessToken);
 
-    const freshToken = await useOrGetNewTokenIfExpired(accessToken, options);
-
     return new LearningPlatformClient(
-      freshToken,
+      null,
+      accessToken,
       options
     ) as unknown as LearningPlatformClientType;
   }
 
+  /**
+   * i don't know how you'd even get a google access token but if you somehow aquired one, here you go
+   */
   static async fromGoogleAccessToken(
     googleAccessToken: string,
     options?: LearningPlatformClientOptions
   ) {
     assertGoogleAccessToken(googleAccessToken);
 
-    const data = await getLearningPlatformAccessToken(
+    const data = await getLearningPlatformRefreshToken(
       getUnauthedRequestConfig(options),
       googleAccessToken
     );
-    const accessToken = data.googleSignin!.token!;
+    const refreshToken = data.googleSignin!.token!;
 
-    return LearningPlatformClient.fromAccessToken(accessToken, options);
+    return LearningPlatformClient.fromRefreshToken(refreshToken, options);
   }
 
   static async fromCredentials(
@@ -157,9 +193,9 @@ export class LearningPlatformClient {
       email,
       password
     );
-    const accessToken = data.signin!.token!;
+    const refreshToken = data.signin!.token!;
 
-    return LearningPlatformClient.fromAccessToken(accessToken, options);
+    return LearningPlatformClient.fromRefreshToken(refreshToken, options);
   }
 
   private handleError<Args extends unknown[], Return extends Promise<unknown>>(
@@ -172,10 +208,14 @@ export class LearningPlatformClient {
       // @ts-expect-error haher
     ): Return {
       try {
-        this._accessToken = await useOrGetNewTokenIfExpired(this._accessToken, {
-          fetch: this.fetch,
-          baseUrl: this.baseUrl,
-        });
+        this._accessToken = await useOrGetNewTokenIfExpired(
+          this._refreshToken,
+          this._accessToken,
+          {
+            fetch: this.fetch,
+            baseUrl: this.baseUrl,
+          }
+        );
         return await func(...args);
       } catch (err) {
         const isIrrelevantWarning = (err as Error).message?.includes(
@@ -209,10 +249,10 @@ export class LearningPlatformClient {
     }.bind(this);
   }
   private async refreshAccessToken() {
-    const data = await getRefreshedLearningPlatformAccessToken(
+    const data = await getLearningPlatformAccessToken(
       this.fetch,
       this.baseUrl,
-      this._accessToken
+      this._refreshToken!
     );
 
     if (!data.ok || !data.token)
@@ -222,7 +262,9 @@ export class LearningPlatformClient {
 
     this._accessToken = data.token;
 
-    this.graphqlClient.setHeaders(getAuthHeaders(this._accessToken));
+    this.graphqlClient.setHeaders(
+      getAuthHeaders(this._refreshToken, this._accessToken)
+    );
 
     return data.token;
   }
@@ -232,24 +274,27 @@ export type LearningPlatformClientType = LearningPlatformClient &
   LearningPlatformQueryExecutor;
 
 async function useOrGetNewTokenIfExpired(
-  accessToken: string,
+  refreshToken: string | null,
+  accessToken: string | null,
   options?: LearningPlatformClientOptions
 ) {
-  const payload = assertLearningPlatformAccessToken(accessToken);
+  try {
+    assertLearningPlatformAccessToken(accessToken);
 
-  const softExp =
-    payload.iat + config.learningPlatformAccessTokenSoftExpirySeconds;
-
-  const isExpired = payload.exp < Date.now() / 1000;
-
-  const isSoftExpired = softExp < Date.now() / 1000;
-
-  if (!isExpired && !isSoftExpired) return accessToken;
-
-  const res = await getRefreshedLearningPlatformAccessToken(
-    options?.fetch || fetch,
-    options?.baseUrl || config.baseUrl,
-    accessToken
-  );
-  return res.token;
+    return accessToken;
+  } catch (err) {
+    if (
+      (err as Error).message === 'CodeUniversity.assertJwt: Expired token' ||
+      !accessToken
+    ) {
+      const res = await getLearningPlatformAccessToken(
+        options?.fetch || fetch,
+        options?.baseUrl || config.baseUrl,
+        refreshToken!
+      );
+      return res.token;
+    } else {
+      throw err;
+    }
+  }
 }

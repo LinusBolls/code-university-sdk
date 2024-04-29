@@ -14,5 +14,6 @@ export const config = {
 
   learningPlatformGoogleClientId,
 
-  learningPlatformAccessTokenSoftExpirySeconds: 10 * 60,
+  learningPlatformAccessTokenExpirySeconds: 10 * 60,
+  learningPlatformRefreshTokenExpirySeconds: 2 * 7 * 24 * 60 * 60,
 };

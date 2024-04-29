@@ -199,11 +199,11 @@ export async function signIn(
 }
 
 /**
- * returns an access token required to authenticate with the CODE Learning Platform.
+ * returns a refresh token required to authenticate with the CODE Learning Platform.
  *
  * @param googleAccessToken a jwt issued by google to the learning platform
  */
-export async function getLearningPlatformAccessToken(
+export async function getLearningPlatformRefreshToken(
   config: RequestConfig,
   googleAccessToken: string
 ) {

@@ -50,7 +50,7 @@ const freshInvalidIss = jwt.sign(
   'testSecret'
 );
 
-export const MockLPAccessToken = {
+export const MockLPRefreshToken = {
   freshValid,
   expiredValid,
   freshInvalidAud,

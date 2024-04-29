@@ -1,4 +1,5 @@
-import { MockLPAccessToken } from './jwt';
+import { MockLPAccessToken } from './accessTokens';
+import { MockLPRefreshToken } from './refreshTokens';
 
 const majorNodeVersion = parseInt(
   process.version.match(/^v(\d+).\d+.\d+$/)?.[1] || 'NaN'
@@ -38,7 +39,7 @@ export const mockFetch = ((url: string, options?: RequestInit) => {
   ) {
     return createFetchJsonResponse({
       ok: true,
-      token: MockLPAccessToken.freshValid,
+      token: MockLPRefreshToken.freshValid,
     });
   }
 

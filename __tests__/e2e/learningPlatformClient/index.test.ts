@@ -5,12 +5,12 @@ import {
   LearningPlatformClientType,
 } from '../../../src';
 
-const accessToken = process.env.LEARNING_PLATFORM_ACCESS_TOKEN!;
+const accessToken = process.env.LEARNING_PLATFORM_REFRESH_TOKEN!;
 const googleAccessToken = process.env.GOOGLE_ACCESS_TOKEN!;
 
 if (!accessToken) {
   throw new Error(
-    'Env: LEARNING_PLATFORM_ACCESS_TOKEN not found. Please provide this value in .env.testing'
+    'Env: LEARNING_PLATFORM_REFRESH_TOKEN not found. Please provide this value in .env.testing'
   );
 }
 if (!googleAccessToken) {
@@ -25,12 +25,12 @@ describe('LearningPlatformClient (e2e)', () => {
 
   beforeAll(async () => {
     learningPlatform =
-      await LearningPlatformClient.fromAccessToken(accessToken);
+      await LearningPlatformClient.fromRefreshToken(accessToken);
   });
 
   it('authenticates with fromAccessToken', async () => {
     const newLearningPlatform =
-      await LearningPlatformClient.fromAccessToken(accessToken);
+      await LearningPlatformClient.fromRefreshToken(accessToken);
     const settings = await newLearningPlatform.getOwnSettings();
 
     expect(settings).toHaveProperty('mySettings');
