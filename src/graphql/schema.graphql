@@ -61,13 +61,12 @@ type Assessment {
   readyForPublishing: Boolean
   publishedAt: DateTime
   proposalStatus: ProposalStatus!
-  assessmentStatus: AssessmentStatus
+  assessmentStatus: String
   assessmentStyle: AssessmentStyle!
   assessmentType: AssessmentType!
   examinationForms: [ExaminationForm!]!
   proposalText: String
   grade: Float
-  assessmentProtocol: String
   internalNotes: String
   externalFeedback: String
   earlyAssessmentProposal: String
@@ -230,6 +229,7 @@ input AssessmentProposalInput {
   location: String
   remoteLocation: String
   startTime: DateTime
+  eventLength: Int
   handinDeadline: DateTime
   handinId: ID
   examinationForms: [ExaminationForm]
@@ -1029,6 +1029,15 @@ type ModuleHandbookModule {
   updatedAt: DateTime!
 }
 
+"""
+ModuleHandbookModuleData
+"""
+type ModuleHandbookModuleData {
+  type: String!
+  moduleIdentifier: String!
+  handbook: String!
+}
+
 input ModuleHandbookModuleInput {
   type: ModuleHandbookModuleType!
   numMandatoryElectives: Int
@@ -1229,21 +1238,6 @@ type Mutation {
     assessmentId: ID!
     data: AssessmentProposalInput!
   ): Assessment
-
-  """
-  Sets the assistant on the specified assessment
-  """
-  setAssessmentHelper(assessmentId: ID!, userId: ID!): Assessment
-
-  """
-  Sets the assessor on the specified assessment
-  """
-  setAssessmentAssessor(assessmentId: ID!, userId: ID!): Assessment
-
-  """
-  Removes the current assistant from the specified assessment
-  """
-  removeAssessmentHelper(assessmentId: ID!): Assessment
 
   """
   Mark all the assessments as ready for publishing
@@ -1671,7 +1665,7 @@ input OffsetPaginationInput {
   offset: Int
 }
 
-type PartnerCompany {
+type OldPartnerCompany {
   id: String!
   slug: String!
   domain: String!
@@ -1838,9 +1832,29 @@ input ProjectFilter {
   semester: String
 
   """
+  Show projects that are part of the active semester
+  """
+  currentSemesterOnly: Boolean
+
+  """
   Show only projects that were created by the current user
   """
   myProjects: Boolean
+
+  """
+  Show only projects that use resources of the given company
+  """
+  company: String
+
+  """
+  Show only projects that use the given resource
+  """
+  partnerResource: String
+
+  """
+  Show only projects that do not use the given resource
+  """
+  notPartnerResource: String
 }
 
 input ProjectInput {
@@ -2073,19 +2087,6 @@ type Query {
   assessments(proposalStatus: ProposalStatus): [Assessment!]!
 
   """
-  List forwarded assessments for a given user
-  """
-  forwardedAssessments(
-    pagination: OffsetPaginationInput
-    filter: AssessmentFilter
-  ): [Assessment!]!
-
-  """
-  Counts forwarded assessments for pagination
-  """
-  forwardedAssessmentsCount(filter: AssessmentFilter): Int!
-
-  """
   Get a list of upcoming assessments for a user
   """
   myUpcomingAssessments(pagination: OffsetPaginationInput): [Assessment!]!
@@ -2108,6 +2109,7 @@ type Query {
     sortKey: String
     assessmentStyle: AssessmentStyle
     proposalStatus: ProposalStatus
+    deletedOnly: Boolean
   ): [Assessment!]!
 
   """
@@ -2117,6 +2119,7 @@ type Query {
     filter: AssessmentFilter
     assessmentStyle: AssessmentStyle
     proposalStatus: ProposalStatus
+    deletedOnly: Boolean
   ): Int!
 
   """
@@ -2163,6 +2166,7 @@ type Query {
   ectsStatistics: [EctsStatistic!]
   moduleHandbookModule(moduleHandbookModuleId: ID!): ModuleHandbookModule!
   moduleHandbookModules: [ModuleHandbookModule!]!
+  moduleHandbookModuleData: [ModuleHandbookModuleData!]!
   moduleHandbookModulesByHandbook(moduleHandbookId: ID!): [ModuleHandbookModule]
   semesterModule(
     semesterModuleId: ID
@@ -2242,6 +2246,11 @@ type Query {
   Returns a total count of all modules that have been passed and ECTS that were collected.
   """
   myTotalModuleStats(onlyMandatory: Boolean = false): MyTotalModuleStats
+
+  """
+  Returns StudyPathReport.
+  """
+  studyPathReport: [StudyPathReport!]!
   project(projectId: ID!): Project!
   projects(
     pagination: OffsetPaginationInput
@@ -2449,7 +2458,7 @@ type Query {
   Returns all distinct user skills
   """
   userSkills: [UserSkill!]!
-  partnerCompany(slug: String!): PartnerCompany
+  partnerCompany(slug: String!): OldPartnerCompany
   auditEntries(type: String!, id: ID!): [AuditEntry!]!
 
   """
@@ -2826,6 +2835,17 @@ type StudentModuleHandbook {
   updatedAt: DateTime!
 }
 
+"""
+StudyPathReport
+"""
+type StudyPathReport {
+  user: Int!
+  modules: String!
+  ects: Float!
+  handbook: String!
+  semesterNumber: Int!
+}
+
 type StudyProgram {
   name: String!
   abbreviation: String!
@@ -3110,6 +3130,7 @@ enum UserRole {
   HEAD_OF_PROJECTS
   RELATIONS_MANAGER
   EXTERNAL_STUDENT
+  ORIENTATION_SEMESTER_COORDINATOR
 }
 
 type UserSettings {

@@ -64,8 +64,7 @@ export enum AnnouncementMessageType {
 
 export type Assessment = {
   __typename?: 'Assessment';
-  assessmentProtocol?: Maybe<Scalars['String']['output']>;
-  assessmentStatus?: Maybe<AssessmentStatus>;
+  assessmentStatus?: Maybe<Scalars['String']['output']>;
   assessmentStyle: AssessmentStyle;
   assessmentType: AssessmentType;
   assessor?: Maybe<User>;
@@ -191,6 +190,7 @@ export type AssessmentPermissions = {
 
 export type AssessmentProposalInput = {
   assistantId?: InputMaybe<Scalars['ID']['input']>;
+  eventLength?: InputMaybe<Scalars['Int']['input']>;
   examinationForms?: InputMaybe<Array<InputMaybe<ExaminationForm>>>;
   handinDeadline?: InputMaybe<Scalars['DateTime']['input']>;
   handinId?: InputMaybe<Scalars['ID']['input']>;
@@ -781,6 +781,14 @@ export type ModuleHandbookModule = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** ModuleHandbookModuleData */
+export type ModuleHandbookModuleData = {
+  __typename?: 'ModuleHandbookModuleData';
+  handbook: Scalars['String']['output'];
+  moduleIdentifier: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
 export type ModuleHandbookModuleInput = {
   electiveModules: Array<Scalars['String']['input']>;
   numMandatoryElectives?: InputMaybe<Scalars['Int']['input']>;
@@ -970,8 +978,6 @@ export type Mutation = {
   registerForEventGroup: Scalars['Boolean']['output'];
   /** Rejoin an event */
   rejoinEvent?: Maybe<Event>;
-  /** Removes the current assistant from the specified assessment */
-  removeAssessmentHelper?: Maybe<Assessment>;
   /** Remove an event from an event group */
   removeEventFromGroup?: Maybe<Event>;
   removeModuleFromSemesterPlanner?: Maybe<SemesterPlannerModule>;
@@ -984,10 +990,6 @@ export type Mutation = {
   revokeAssessmentForSemesterModule?: Maybe<Scalars['Boolean']['output']>;
   /** Schedules an early assesstment, effectively accepting the request */
   scheduleEarlyAssessment?: Maybe<Assessment>;
-  /** Sets the assessor on the specified assessment */
-  setAssessmentAssessor?: Maybe<Assessment>;
-  /** Sets the assistant on the specified assessment */
-  setAssessmentHelper?: Maybe<Assessment>;
   /** Sets a new password for the user identified by the `set` token in the payload */
   setPassword?: Maybe<AuthPayload>;
   setProjectSponsor: Scalars['Boolean']['output'];
@@ -1310,10 +1312,6 @@ export type MutationRejoinEventArgs = {
   eventId: Scalars['ID']['input'];
 };
 
-export type MutationRemoveAssessmentHelperArgs = {
-  assessmentId: Scalars['ID']['input'];
-};
-
 export type MutationRemoveEventFromGroupArgs = {
   eventId: Scalars['ID']['input'];
 };
@@ -1349,16 +1347,6 @@ export type MutationRevokeAssessmentForSemesterModuleArgs = {
 export type MutationScheduleEarlyAssessmentArgs = {
   assessmentId: Scalars['ID']['input'];
   data: AssessmentProposalInput;
-};
-
-export type MutationSetAssessmentAssessorArgs = {
-  assessmentId: Scalars['ID']['input'];
-  userId: Scalars['ID']['input'];
-};
-
-export type MutationSetAssessmentHelperArgs = {
-  assessmentId: Scalars['ID']['input'];
-  userId: Scalars['ID']['input'];
 };
 
 export type MutationSetPasswordArgs = {
@@ -1572,8 +1560,8 @@ export type OffsetPaginationInput = {
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type PartnerCompany = {
-  __typename?: 'PartnerCompany';
+export type OldPartnerCompany = {
+  __typename?: 'OldPartnerCompany';
   color: Scalars['String']['output'];
   domain: Scalars['String']['output'];
   id: Scalars['String']['output'];
@@ -1694,12 +1682,20 @@ export type ProjectCheckoutRequestTeamMemberInput = {
 };
 
 export type ProjectFilter = {
+  /** Show only projects that use resources of the given company */
+  company?: InputMaybe<Scalars['String']['input']>;
+  /** Show projects that are part of the active semester */
+  currentSemesterOnly?: InputMaybe<Scalars['Boolean']['input']>;
   /** Show projects that are still looking for teammates */
   isLookingForTeammates?: InputMaybe<Scalars['Boolean']['input']>;
   /** Show only projects that were created by the current user */
   myProjects?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Show only projects that do not use the given resource */
+  notPartnerResource?: InputMaybe<Scalars['String']['input']>;
   /** Show only official CODE projects */
   officialProject?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Show only projects that use the given resource */
+  partnerResource?: InputMaybe<Scalars['String']['input']>;
   /** Filter by a specific project type */
   projectType?: InputMaybe<ProjectType>;
   /** Fulltext search string */
@@ -1905,10 +1901,6 @@ export type Query = {
   /** List events visible to the currently logged in user */
   events: Array<Event>;
   followedProjectUpdates?: Maybe<Array<ProjectUpdate>>;
-  /** List forwarded assessments for a given user */
-  forwardedAssessments: Array<Assessment>;
-  /** Counts forwarded assessments for pagination */
-  forwardedAssessmentsCount: Scalars['Int']['output'];
   getObjectUrl: Scalars['String']['output'];
   /** Gets the semester wide hand-in deadline for a module */
   handinDeadline?: Maybe<Scalars['DateTime']['output']>;
@@ -1929,6 +1921,7 @@ export type Query = {
   moduleAndAssessmentStatistics?: Maybe<Array<ModuleAndAssessmentStatistic>>;
   moduleHandbook: ModuleHandbook;
   moduleHandbookModule: ModuleHandbookModule;
+  moduleHandbookModuleData: Array<ModuleHandbookModuleData>;
   moduleHandbookModules: Array<ModuleHandbookModule>;
   moduleHandbookModulesByHandbook?: Maybe<Array<Maybe<ModuleHandbookModule>>>;
   moduleHandbooks: Array<ModuleHandbook>;
@@ -1971,7 +1964,7 @@ export type Query = {
   nextSemester?: Maybe<Semester>;
   /** List upcoming non-academic events */
   nonAcademicEvents?: Maybe<Array<Maybe<Event>>>;
-  partnerCompany?: Maybe<PartnerCompany>;
+  partnerCompany?: Maybe<OldPartnerCompany>;
   /** Get a presigned S3 upload URL to be used in the frontend to upload a learning resource file */
   presignedLearningResourceUploadUrl?: Maybe<Scalars['String']['output']>;
   professorSemesterModules?: Maybe<Array<Maybe<SemesterModule>>>;
@@ -2013,6 +2006,8 @@ export type Query = {
   students: Array<User>;
   /** Counts all students */
   studentsCount: Scalars['Int']['output'];
+  /** Returns StudyPathReport. */
+  studyPathReport: Array<StudyPathReport>;
   studyPrograms: Array<StudyProgram>;
   /** List all of the current user's hand-in submissions */
   submittedHandins: Array<UserHandin>;
@@ -2116,15 +2111,6 @@ export type QueryEventGroupsCountArgs = {
   type?: InputMaybe<EventGroupType>;
 };
 
-export type QueryForwardedAssessmentsArgs = {
-  filter?: InputMaybe<AssessmentFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-export type QueryForwardedAssessmentsCountArgs = {
-  filter?: InputMaybe<AssessmentFilter>;
-};
-
 export type QueryGetObjectUrlArgs = {
   awsKey: Scalars['String']['input'];
 };
@@ -2191,6 +2177,7 @@ export type QueryModulesCountArgs = {
 
 export type QueryMyAssessmentsArgs = {
   assessmentStyle?: InputMaybe<AssessmentStyle>;
+  deletedOnly?: InputMaybe<Scalars['Boolean']['input']>;
   filter?: InputMaybe<AssessmentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
   proposalStatus?: InputMaybe<ProposalStatus>;
@@ -2199,6 +2186,7 @@ export type QueryMyAssessmentsArgs = {
 
 export type QueryMyAssessmentsCountArgs = {
   assessmentStyle?: InputMaybe<AssessmentStyle>;
+  deletedOnly?: InputMaybe<Scalars['Boolean']['input']>;
   filter?: InputMaybe<AssessmentFilter>;
   proposalStatus?: InputMaybe<ProposalStatus>;
 };
@@ -2730,6 +2718,16 @@ export type StudentModuleHandbook = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** StudyPathReport */
+export type StudyPathReport = {
+  __typename?: 'StudyPathReport';
+  ects: Scalars['Float']['output'];
+  handbook: Scalars['String']['output'];
+  modules: Scalars['String']['output'];
+  semesterNumber: Scalars['Int']['output'];
+  user: Scalars['Int']['output'];
+};
+
 export type StudyProgram = {
   __typename?: 'StudyProgram';
   abbreviation: Scalars['String']['output'];
@@ -2966,6 +2964,7 @@ export enum UserRole {
   FutureStudent = 'FUTURE_STUDENT',
   HeadOfProjects = 'HEAD_OF_PROJECTS',
   Lecturer = 'LECTURER',
+  OrientationSemesterCoordinator = 'ORIENTATION_SEMESTER_COORDINATOR',
   OrientationStudent = 'ORIENTATION_STUDENT',
   Partner = 'PARTNER',
   Professor = 'PROFESSOR',
