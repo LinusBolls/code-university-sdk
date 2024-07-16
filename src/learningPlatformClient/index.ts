@@ -178,9 +178,9 @@ export class LearningPlatformClient {
       getUnauthedRequestConfig(options),
       googleAccessToken
     );
-    const refreshToken = data.googleSignin!.token!;
+    const accessToken = data.googleSignin!.token!;
 
-    return LearningPlatformClient.fromRefreshToken(refreshToken, options);
+    return LearningPlatformClient.fromAccessToken(accessToken, options);
   }
 
   static async fromCredentials(
