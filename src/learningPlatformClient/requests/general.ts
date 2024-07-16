@@ -223,6 +223,12 @@ export async function getLearningPlatformRefreshToken(
 
   const refreshToken = res.headers.getSetCookie()[0]?.match(/cid=(.*?);/)?.[1];
 
+  if (!refreshToken) {
+    throw new Error(
+      `CodeUniversity.getLearningPlatformRefreshToken: Failed to parse refresh token from response headers: "${res.headers.getSetCookie().join('; ')}"`
+    );
+  }
+
   return {
     accessToken,
     refreshToken,
