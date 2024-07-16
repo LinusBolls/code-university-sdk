@@ -4,7 +4,7 @@
   "author": "https://github.com/LinusBolls",
   "repository": "github:LinusBolls/code-university-sdk",
   "homepage": "https://github.com/LinusBolls/code-university-sdk#readme",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "license": "MIT",
   "keywords": [
     "code",
@@ -30,7 +30,7 @@
     "test:e2e": "npx vitest --dir __tests__/e2e",
     "test:integration": "npx vitest --dir __tests__/integration",
     "test:unit": "npx vitest --dir __tests__/unit",
-    "test:coverage": "npx vitest run --coverage",
+    "test:coverage": "npx vitest run --coverage --dir __tests__/unit __tests_/integration",
     "test": "npx vitest",
     "lint": "npx eslint \"{src,__tests__}/**/*.ts\" --fix"
   },
