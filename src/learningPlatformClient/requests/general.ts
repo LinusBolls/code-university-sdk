@@ -214,11 +214,17 @@ export async function getLearningPlatformRefreshToken(
       __typename
     }
   }`;
-  const res = await config.graphqlClient.request<MutationRes<'googleSignin'>>(
-    query,
-    {
-      code: googleAccessToken,
-    }
-  );
-  return res;
+  const res = await config.graphqlClient.rawRequest<
+    MutationRes<'googleSignin'>
+  >(query, {
+    code: googleAccessToken,
+  });
+  const accessToken = res.data.googleSignin!.token;
+
+  const refreshToken = res.headers.getSetCookie()[0]?.match(/cid=(.*?);/)?.[1];
+
+  return {
+    accessToken,
+    refreshToken,
+  };
 }
