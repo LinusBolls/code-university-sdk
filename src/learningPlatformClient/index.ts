@@ -178,7 +178,14 @@ export class LearningPlatformClient {
       getUnauthedRequestConfig(options),
       googleAccessToken
     );
-    return LearningPlatformClient.fromRefreshToken(data.refreshToken, options);
+    if (data.refreshToken) {
+      return LearningPlatformClient.fromRefreshToken(
+        data.refreshToken,
+        options
+      );
+    } else {
+      return LearningPlatformClient.fromAccessToken(data.accessToken, options);
+    }
   }
 
   static async fromCredentials(
@@ -288,7 +295,7 @@ async function useOrGetNewTokenIfExpired(
       const res = await getLearningPlatformAccessToken(
         options?.fetch || fetch,
         options?.baseUrl || config.baseUrl,
-        refreshToken!
+        refreshToken
       );
       return res.token;
     } else {

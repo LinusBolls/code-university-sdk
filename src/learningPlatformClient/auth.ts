@@ -35,9 +35,11 @@ export interface RefreshLearningPlatformAccessTokenResponse {
 export async function getLearningPlatformAccessToken(
   fetchImpl: RequestConfig['fetch'],
   baseUrl: string,
-  refreshToken: string
+  refreshToken: string | null
 ): Promise<RefreshLearningPlatformAccessTokenResponse> {
-  assertLearningPlatformRefreshToken(refreshToken);
+  if (refreshToken != null) {
+    assertLearningPlatformRefreshToken(refreshToken);
+  }
 
   const res = await fetchImpl(baseUrl + '/cid_refresh', {
     method: 'POST',

@@ -199,7 +199,10 @@ export async function signIn(
 }
 
 /**
- * returns a refresh token required to authenticate with the CODE Learning Platform.
+ * returns an `access token` required to authenticate with the CODE Learning Platform.
+ *
+ * if not in a browser environment, will also return the `refresh token` included as `Set-Cookie` header from the Learning Platform API.
+ * in the browser, the `Set-Cookie` header gets automatically stripped from the fetch response by the browser, so we can't access it there.
  *
  * @param googleAccessToken a jwt issued by google to the learning platform
  */
@@ -219,18 +222,14 @@ export async function getLearningPlatformRefreshToken(
   >(query, {
     code: googleAccessToken,
   });
-  const accessToken = res.data.googleSignin!.token;
+  const accessToken = res.data.googleSignin!.token!;
 
-  const refreshToken = res.headers.getSetCookie()[0]?.match(/cid=(.*?);/)?.[1];
-
-  if (!refreshToken) {
-    throw new Error(
-      `CodeUniversity.getLearningPlatformRefreshToken: Failed to parse refresh token from response headers: "${res.headers.getSetCookie().join('; ')}"`
-    );
-  }
+  const refreshToken =
+    res.headers.getSetCookie()[0]?.match(/cid=(.*?);/)?.[1] ?? null;
 
   return {
     accessToken,
+    /** this is null in a browser environment */
     refreshToken,
   };
 }
