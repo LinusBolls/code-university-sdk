@@ -130,13 +130,13 @@ export class LearningPlatformClient {
     options?: LearningPlatformClientOptions
   ) {
     try {
-      return LearningPlatformClient.fromRefreshToken(token, options);
+      return await LearningPlatformClient.fromRefreshToken(token, options);
     } catch (err) {}
     try {
-      return LearningPlatformClient.fromAccessToken(token, options);
+      return await LearningPlatformClient.fromAccessToken(token, options);
     } catch (err) {}
     try {
-      return LearningPlatformClient.fromGoogleAccessToken(token, options);
+      return await LearningPlatformClient.fromGoogleAccessToken(token, options);
     } catch (err) {}
 
     throw new Error(
