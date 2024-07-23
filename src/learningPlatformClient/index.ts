@@ -122,6 +122,27 @@ export class LearningPlatformClient {
       'raw.mutation'
     ),
   };
+  /**
+   * @param token  a Learning Platform access token, Learning Platform refresh token, or Google access token.
+   */
+  static async fromAnyToken(
+    token: string,
+    options?: LearningPlatformClientOptions
+  ) {
+    try {
+      return LearningPlatformClient.fromRefreshToken(token, options);
+    } catch (err) {}
+    try {
+      return LearningPlatformClient.fromAccessToken(token, options);
+    } catch (err) {}
+    try {
+      return LearningPlatformClient.fromGoogleAccessToken(token, options);
+    } catch (err) {}
+
+    throw new Error(
+      'CodeUniversity.LearningPlatformClient.fromAnyToken: Provided token is invalid'
+    );
+  }
 
   /**
    * the main way to initialize the class.
