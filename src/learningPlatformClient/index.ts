@@ -123,25 +123,36 @@ export class LearningPlatformClient {
     ),
   };
   /**
-   * @param token  a Learning Platform access token, Learning Platform refresh token, or Google access token.
+   * @param token a Learning Platform access token, Learning Platform refresh token, or Google access token.
+   *
+   * if `token` is nullable or expired, but the method is called in a browser with the `cid` cookie set, this will still work.
    */
   static async fromAnyToken(
-    token: string,
+    token?: string | null,
     options?: LearningPlatformClientOptions
   ) {
     try {
-      return await LearningPlatformClient.fromRefreshToken(token, options);
+      return await LearningPlatformClient.fromRefreshToken(token!, options);
     } catch (err) {}
     try {
-      return await LearningPlatformClient.fromAccessToken(token, options);
+      return await LearningPlatformClient.fromAccessToken(token!, options);
     } catch (err) {}
     try {
-      return await LearningPlatformClient.fromGoogleAccessToken(token, options);
+      return await LearningPlatformClient.fromGoogleAccessToken(
+        token!,
+        options
+      );
     } catch (err) {}
 
-    throw new Error(
-      'CodeUniversity.LearningPlatformClient.fromAnyToken: Provided token is invalid'
-    );
+    // this will work if the token is invalid, but the httpOonly `cid` cookie is set in the browser environment
+    const accessToken = await useOrGetNewTokenIfExpired(null, null, options);
+
+    if (!accessToken) {
+      throw new Error(
+        'CodeUniversity.LearningPlatformClient.fromAnyToken: Provided token is invalid'
+      );
+    }
+    return await LearningPlatformClient.fromAccessToken(accessToken, options);
   }
 
   /**
